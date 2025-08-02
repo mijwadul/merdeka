@@ -2,7 +2,8 @@
 
 import os
 from flask import Blueprint, request, jsonify, current_app
-from flask_jwt_extended import jwt_required, get_jwt_identity
+# --- PERBAIKAN 1: Ganti import autentikasi ---
+from app.utils.decorators import token_required 
 from werkzeug.utils import secure_filename
 from app.extensions import db
 from app.models import Layout
@@ -45,9 +46,12 @@ def parse_pdf_to_json(file_path):
     return structure
 
 @layout_bp.route('/upload', methods=['POST'])
-@jwt_required()
-def upload_layout():
-    upload_folder = current_app.config['LAYOUT_UPLOAD_FOLDER']
+# --- PERBAIKAN 2: Gunakan decorator yang benar ---
+@token_required
+def upload_layout(current_user): # Menerima `current_user` dari decorator
+    # --- PERBAIKAN 3: Gunakan nama config folder yang benar ---
+    upload_folder = current_app.config['UPLOAD_FOLDER'] 
+    
     if 'file' not in request.files:
         return jsonify({"msg": "No file part"}), 400
     
@@ -71,10 +75,10 @@ def upload_layout():
                 os.remove(file_path)
             return jsonify({"msg": f"Error parsing file: {str(e)}"}), 500
 
-        current_user_id = get_jwt_identity()
+        # --- PERBAIKAN 4: Gunakan ID dari objek `current_user` ---
         new_layout = Layout(
             jenjang=jenjang, mapel=mapel, tipe_dokumen=tipe_dokumen,
-            layout_json=layout_json, uploaded_by=current_user_id
+            layout_json=layout_json, uploaded_by=current_user.id
         )
         db.session.add(new_layout)
         db.session.commit()

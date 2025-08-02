@@ -15,6 +15,7 @@ Thumbs.db
 # Python Virtual Environment
 /backend/venv/
 /backend/migrations/
+/backend/uploads/
 
 # Python cache files
 **/__pycache__/

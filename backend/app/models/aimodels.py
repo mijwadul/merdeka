@@ -15,21 +15,27 @@ class Layout(db.Model):
     mapel = db.Column(db.String(100), nullable=False)
     tipe_dokumen = db.Column(db.String(50), nullable=False)
     layout_json = db.Column(JSON, nullable=False)
-    uploaded_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # Menunjuk ke user.id
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     status = db.Column(db.String(20), default='aktif')
     created_at = db.Column(db.TIMESTAMP, server_default=func.now())
+    # --- TAMBAHAN: Relasi balik ke User ---
+    uploader = db.relationship('User', back_populates='layouts')
 
 class Book(db.Model):
     __tablename__ = 'books'
     id = db.Column(db.Integer, primary_key=True)
     judul_buku = db.Column(db.String(255), nullable=False)
+    jenjang = db.Column(db.String(50), nullable=False)
+    mapel = db.Column(db.String(100), nullable=False)
     penulis = db.Column(db.String(255))
     tahun_terbit = db.Column(db.Integer)
     file_path = db.Column(db.String(255), nullable=False)
-    uploaded_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # Menunjuk ke user.id
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.TIMESTAMP, server_default=func.now())
     
     media_assets = db.relationship('MediaAsset', backref='book', lazy=True, cascade="all, delete-orphan")
+    # --- TAMBAHAN: Relasi balik ke User ---
+    uploader = db.relationship('User', back_populates='books')
 
 class MediaAsset(db.Model):
     __tablename__ = 'media_assets'
@@ -52,7 +58,7 @@ class MediaAsset(db.Model):
 class Prota(db.Model):
     __tablename__ = 'prota'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False) # Menunjuk ke user.id
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     mapel = db.Column(db.String(100), nullable=False)
     jenjang = db.Column(db.String(50), nullable=False)
     tahun_ajaran = db.Column(db.String(20), nullable=False)
@@ -62,6 +68,8 @@ class Prota(db.Model):
     updated_at = db.Column(db.TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     promes = db.relationship('Promes', backref='prota', lazy=True, cascade="all, delete-orphan")
+    # --- TAMBAHAN: Relasi balik ke User ---
+    user = db.relationship('User', back_populates='prota')
 
 class Promes(db.Model):
     __tablename__ = 'promes'

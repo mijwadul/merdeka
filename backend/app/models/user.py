@@ -27,11 +27,11 @@ class User(db.Model):
     school = db.relationship('School', back_populates='staff', foreign_keys=[school_id])
     schools_taught = db.relationship('School', secondary=teacher_schools_table, back_populates='teachers')
 
-    # === RELASI KE MODEL-MODEL KURIKULUM AI (TAMBAHAN) ===
-    layouts = db.relationship('Layout', backref='uploader', lazy=True)
-    books = db.relationship('Book', backref='uploader', lazy=True)
-    prota = db.relationship('Prota', backref='user', lazy=True)
-    # ======================================================
+    # === PERBAIKAN RELASI: Menggunakan string untuk menghindari circular import ===
+    layouts = db.relationship('Layout', back_populates='uploader', lazy=True)
+    books = db.relationship('Book', back_populates='uploader', lazy=True)
+    prota = db.relationship('Prota', back_populates='user', lazy=True)
+    # ========================================================================
 
     def to_dict(self):
         return {

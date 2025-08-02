@@ -42,8 +42,8 @@ function AITools() {
       title: '2. Book Retriever',
       description: 'Unggah buku pegangan guru atau siswa. Sistem akan mengekstrak materi dan gambar secara otomatis.',
       icon: <MenuBookIcon fontSize="large" />,
-      path: '#', // Belum aktif
-      enabled: false,
+      path: '/aitools/book-retriever',
+      enabled: true,
     },
     {
       title: '3. Wizard Generator',

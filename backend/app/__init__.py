@@ -6,6 +6,7 @@ from flask_jwt_extended import JWTManager
 from .extensions import db, migrate
 from app.routes.retriever import retriever_bp
 from .routes.layout_routes import layout_bp
+from .routes.book_routes import book_bp
 
 def create_app():
     """Create and configure an instance of the Flask application."""
@@ -60,6 +61,7 @@ def create_app():
     app.register_blueprint(subject_routes.subject_bp)
     app.register_blueprint(retriever_bp)
     app.register_blueprint(layout_bp, url_prefix='/api/layouts')
+    app.register_blueprint(book_bp, url_prefix='/api/books')
 
     # Daftarkan command CLI kustom
     from . import commands

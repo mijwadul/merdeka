@@ -5,7 +5,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import AITools from './pages/aitools/AITools';
 import LayoutRetrieverPage from './pages/aitools/LayoutRetrieverPage';
-import SearchDocs from './pages/aitools/SearchDocs'; // <-- PERBAIKAN DI SINI
+import BookRetrieverPage from './pages/aitools/BookRetrieverPage';
 import Generator from './pages/aitools/Generator'; 
 import UserManagementPage from './pages/user/UserManagementPage';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -33,7 +33,7 @@ function AppRoutes() {
         >
           <Route path="/ai/tools" element={<AITools />} />
           <Route path="/aitools/layout-retriever" element={<LayoutRetrieverPage/>} />
-          <Route path="/aitools/search" element={<SearchDocs />} />
+          <Route path="/aitools/book-retriever" element={<BookRetrieverPage />} />
           <Route path="/aitools/generator" element={<Generator />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/schools" element={<SchoolManagementPage />} />
