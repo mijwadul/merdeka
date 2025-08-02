@@ -1,0 +1,47 @@
+# GatraSinau.AI .gitignore - v2
+
+# IDE/Editor and OS-specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# --- Python / Backend ---
+# Local environment variables
+.env
+
+# Python Virtual Environment
+/backend/venv/
+/backend/migrations/
+
+# Python cache files
+**/__pycache__/
+*.pyc
+
+# Local Database & AI Index folder
+/backend/app/data/
+/backend/gatra_sinau.db
+
+# User-uploaded files
+/backend/uploads/
+
+# --- Node.js / Frontend ---
+# Dependencies
+/frontend/node_modules/
+
+# Production build output
+/frontend/build/
+
+# Local environment variables
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+
+# Logs and test reports
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+/frontend/coverage/
