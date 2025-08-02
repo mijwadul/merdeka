@@ -2,26 +2,27 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Grid, Paper,
-  Avatar, useTheme, Button
+  Avatar, useTheme
 } from '@mui/material';
 import { motion } from 'framer-motion';
 
-import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
-import SearchIcon from '@mui/icons-material/Search';
-import CreateIcon from '@mui/icons-material/Create';
-import AssessmentIcon from '@mui/icons-material/Assessment';
+// Import ikon baru
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import ScienceIcon from '@mui/icons-material/Science';
 
 import AIToolsImage from '../../assets/AI.png';
 
 const pageVariants = {
-  initial: { opacity: 0, rotateY: -90 },
-  in: { opacity: 1, rotateY: 0 },
-  out: { opacity: 0, rotateY: 90 },
+  initial: { opacity: 0, scale: 0.9 },
+  in: { opacity: 1, scale: 1 },
+  out: { opacity: 0, scale: 0.9 },
 };
 
 const pageTransition = {
-  type: 'tween',
-  ease: 'anticipate',
+  type: 'spring',
+  stiffness: 100,
   duration: 0.5,
 };
 
@@ -31,28 +32,32 @@ function AITools() {
 
   const tools = [
     {
-      title: 'Document Retriever',
-      description: 'Fetch and embed curriculum documents from official sources.',
-      icon: <LibraryBooksIcon fontSize="large" />,
-      path: '/aitools/retriever',
+      title: '1. Layout Retriever',
+      description: 'Unggah template layout dokumen resmi (Prota, Modul Ajar) sebagai referensi utama untuk AI.',
+      icon: <CloudUploadIcon fontSize="large" />,
+      path: '/aitools/layout-retriever', // Path baru untuk halaman layout retriever
+      enabled: true,
     },
     {
-      title: 'Curriculum Search',
-      description: 'Find CP, ATP, and others via Google Search API.',
-      icon: <SearchIcon fontSize="large" />,
-      path: '/aitools/search',
+      title: '2. Book Retriever',
+      description: 'Unggah buku pegangan guru atau siswa. Sistem akan mengekstrak materi dan gambar secara otomatis.',
+      icon: <MenuBookIcon fontSize="large" />,
+      path: '#', // Belum aktif
+      enabled: false,
     },
     {
-      title: 'Document Generator',
-      description: 'Automatically create RPP, Teaching Modules, CP, etc.',
-      icon: <CreateIcon fontSize="large" />,
-      path: '/aitools/generator',
+      title: '3. Wizard Generator',
+      description: 'Mulai proses pembuatan dokumen secara bertahap, dari Prota hingga soal, dibantu oleh AI.',
+      icon: <AutoStoriesIcon fontSize="large" />,
+      path: '#', // Belum aktif
+      enabled: false,
     },
     {
-      title: 'Automatic Evaluation (Coming Soon)',
-      description: 'Input scores and let AI analyze learning results.',
-      icon: <AssessmentIcon fontSize="large" />,
-      path: '#',
+      title: '4. AI Validator',
+      description: 'Periksa kesesuaian dan kualitas dokumen yang dihasilkan AI berdasarkan layout dan buku acuan.',
+      icon: <ScienceIcon fontSize="large" />,
+      path: '#', // Belum aktif
+      enabled: false,
     },
   ];
 
@@ -63,54 +68,48 @@ function AITools() {
       exit="out"
       variants={pageVariants}
       transition={pageTransition}
-      style={{ position: 'absolute', width: '100%' }}
     >
-      <Box sx={{ p: { xs: 2, sm: 3 } }}>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            mb: 4,
-            textAlign: { xs: 'center', md: 'left' }
-          }}
-        >
-          <Box sx={{ mb: { xs: 3, md: 0 } }}>
-            <Typography variant="h1">AI Tools</Typography>
-            <Typography variant="h5" color="text.secondary">
-              Accelerate your teaching tasks with intelligent tools.
-            </Typography>
-          </Box>
-          <Box
+      <Box sx={{ p: 3 }}>
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Typography variant="h4" gutterBottom fontWeight="bold">
+            Pusat Alat Bantu AI Kurikulum
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary">
+            Mulai proses pembuatan dokumen kurikulum Anda dengan mengunggah aset yang dibutuhkan.
+          </Typography>
+           <Box
             component="img"
             src={AIToolsImage}
             alt="AI Tools illustration"
-            sx={{ height: { xs: 220, md: 300 }, maxWidth: { xs: '80%', md: 'auto' } }}
+            sx={{ height: { xs: 200, md: 250 }, maxWidth: { xs: '80%', md: 'auto' }, my: 2 }}
           />
         </Box>
 
-        <Grid container spacing={3}>
-          {tools.map((tool, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
+        <Grid container spacing={4}>
+          {tools.map((tool) => (
+            <Grid item xs={12} sm={6} md={3} key={tool.title}>
               <Paper
-                elevation={3}
+                elevation={tool.enabled ? 3 : 1}
                 sx={{
                   p: 3,
                   borderRadius: 3,
                   height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-start',
                   transition: 'transform 0.3s, box-shadow 0.3s',
                   '&:hover': {
-                    transform: 'scale(1.02)',
-                    boxShadow: 6,
+                    transform: tool.enabled ? 'translateY(-5px)' : 'none',
+                    boxShadow: tool.enabled ? 6 : 1,
                   },
-                  cursor: tool.path !== '#' ? 'pointer' : 'default',
+                  cursor: tool.enabled ? 'pointer' : 'not-allowed',
+                  backgroundColor: tool.enabled ? 'background.paper' : theme.palette.action.hover,
                 }}
-                onClick={() => tool.path !== '#' && navigate(tool.path)}
+                onClick={() => tool.enabled && navigate(tool.path)}
               >
                 <Avatar
                   sx={{
-                    bgcolor: theme.palette.primary.main,
+                    bgcolor: tool.enabled ? theme.palette.primary.main : theme.palette.action.disabled,
                     width: 56,
                     height: 56,
                     mb: 2,
@@ -118,7 +117,7 @@ function AITools() {
                 >
                   {tool.icon}
                 </Avatar>
-                <Typography variant="h6">{tool.title}</Typography>
+                <Typography variant="h6" fontWeight="600">{tool.title}</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                   {tool.description}
                 </Typography>

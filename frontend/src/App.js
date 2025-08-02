@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import AITools from './pages/aitools/AITools';
-import Retriever from './pages/aitools/Retriever';
+import LayoutRetrieverPage from './pages/aitools/LayoutRetrieverPage';
 import SearchDocs from './pages/aitools/SearchDocs'; // <-- PERBAIKAN DI SINI
 import Generator from './pages/aitools/Generator'; 
 import UserManagementPage from './pages/user/UserManagementPage';
@@ -32,7 +32,7 @@ function AppRoutes() {
           }
         >
           <Route path="/ai/tools" element={<AITools />} />
-          <Route path="/aitools/retriever" element={<Retriever />} />
+          <Route path="/aitools/layout-retriever" element={<LayoutRetrieverPage/>} />
           <Route path="/aitools/search" element={<SearchDocs />} />
           <Route path="/aitools/generator" element={<Generator />} />
           <Route path="/dashboard" element={<DashboardPage />} />

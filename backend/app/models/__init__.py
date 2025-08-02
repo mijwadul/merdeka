@@ -1,11 +1,29 @@
 # backend/app/models/__init__.py
 
-from .pdf_reference import PDFReference
-from .user import User, teacher_schools_table # Impor tabel perantara juga
+# Model yang sudah ada
+from .user import User, teacher_schools_table
 from .school import School
 from .class_model import Class
-from .subject import Subject 
+from .subject import Subject
 from .generated_document import GeneratedDocument
+from .pdf_reference import PDFReference
+from .aimodels import Layout, Book, MediaAsset, Prota, Promes, Atp, ModulAjar, Soal
 
-# Anda bisa menambahkan __all__ jika ingin
-__all__ = ['PDFReference', 'User', 'School', 'Class', 'Subject', 'teacher_schools_table', 'GeneratedDocument']
+__all__ = [
+    'User', 
+    'teacher_schools_table',
+    'School', 
+    'Class', 
+    'Subject', 
+    'GeneratedDocument',
+    'PDFReference',
+    # Menambahkan model baru ke __all__
+    'Layout',
+    'Book',
+    'MediaAsset',
+    'Prota',
+    'Promes',
+    'Atp',
+    'ModulAjar',
+    'Soal'
+]

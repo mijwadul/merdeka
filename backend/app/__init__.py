@@ -4,6 +4,7 @@ from flask import Flask
 from flask_cors import CORS
 from .extensions import db, migrate
 from app.routes.retriever import retriever_bp
+from .routes.layout_routes import layout_bp
 
 def create_app():
     """Create and configure an instance of the Flask application."""
@@ -49,6 +50,7 @@ def create_app():
     app.register_blueprint(school_routes.school_bp)
     app.register_blueprint(subject_routes.subject_bp)
     app.register_blueprint(retriever_bp)
+    app.register_blueprint(layout_bp, url_prefix='/api/layouts')
     
     from . import commands
     commands.init_app(app)
