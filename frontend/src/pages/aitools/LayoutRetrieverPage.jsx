@@ -1,6 +1,6 @@
 // frontend/src/pages/aitools/LayoutRetrieverPage.jsx
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useContext } from 'react'; // Import useContext
 import { useDropzone } from 'react-dropzone';
 import {
   Box, Typography, Button, Paper, Grid, TextField,
@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { useAuth } from '../../context/AuthContext';
+import AuthContext from '../../context/AuthContext'; // Ganti path jika berbeda
 
 const daftarMapelUmum = [
   'Bahasa Indonesia', 'Matematika', 'IPA (Ilmu Pengetahuan Alam)',
@@ -25,7 +25,10 @@ const LayoutRetrieverPage = () => {
   const [tipeDokumen, setTipeDokumen] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
-  const { token } = useAuth();
+  const { user } = useContext(AuthContext); // Gunakan user dari context
+
+  // Ambil token dari local storage
+  const token = localStorage.getItem('authToken');
 
   const handleMapelChange = (event) => {
     const value = event.target.value;
@@ -65,11 +68,14 @@ const LayoutRetrieverPage = () => {
     formData.append('tipe_dokumen', tipeDokumen);
 
     try {
-      const response = await fetch('/api/layouts/upload', {
+      // --- PERBAIKAN DI SINI ---
+      // Gunakan URL lengkap ke API backend
+      const response = await fetch('http://localhost:5000/api/layouts/upload', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
       });
+      // --- AKHIR PERBAIKAN ---
       const data = await response.json();
 
       if (response.ok) {
