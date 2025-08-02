@@ -15,6 +15,7 @@ class Layout(db.Model):
     mapel = db.Column(db.String(100), nullable=False)
     tipe_dokumen = db.Column(db.String(50), nullable=False)
     layout_json = db.Column(JSON, nullable=False)
+    file_path = db.Column(db.String(255), nullable=True)
     uploaded_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     status = db.Column(db.String(20), default='aktif')
     created_at = db.Column(db.TIMESTAMP, server_default=func.now())
@@ -30,6 +31,7 @@ class Book(db.Model):
     penulis = db.Column(db.String(255))
     tahun_terbit = db.Column(db.Integer)
     file_path = db.Column(db.String(255), nullable=False)
+    topic_json = db.Column(JSON, nullable=True) # Untuk menyimpan daftar isi
     uploaded_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.TIMESTAMP, server_default=func.now())
     

@@ -1,11 +1,13 @@
 # backend/app/routes/book_routes.py
 
 import os
+import threading
 from flask import Blueprint, request, jsonify, current_app
 from werkzeug.utils import secure_filename
 from app.extensions import db
 from app.models import Book, Subject # Tambahkan Subject
 from app.utils.decorators import token_required
+from app.services.book_processing_service import extract_book_content_and_media
 
 book_bp = Blueprint('book_bp', __name__)
 
@@ -52,8 +54,10 @@ def upload_book(current_user):
         db.session.add(new_book)
         db.session.commit()
 
-        # TODO: Panggil service pemrosesan buku secara asynchronous
-        # process_book_async(new_book.id)
+        app_context = current_app.app_context()
+        thread = threading.Thread(target=extract_book_content_and_media, args=(app_context, new_book.id))
+        thread.start()
+        
 
         return jsonify({"msg": "Buku berhasil diunggah dan sedang diproses", "book_id": new_book.id}), 201
 
