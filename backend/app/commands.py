@@ -9,6 +9,7 @@ from flask import current_app
 from .services.rag_service import add_to_collection
 from .services.book_processing_service import extract_book_content_and_media
 from .routes.layout_routes import parse_docx_to_json_and_text, parse_pdf_to_json_and_text
+from .seeds import seed_subjects
 
 bcrypt = Bcrypt()
 
@@ -55,6 +56,7 @@ def init_app(app):
     bcrypt.init_app(app)
     app.cli.add_command(create_developer_command)
     app.cli.add_command(create_school_command)
+    app.cli.add_command(seed_command)
 
 @click.command('reindex-all')
 @with_appcontext
@@ -123,5 +125,16 @@ def init_app(app):
     bcrypt.init_app(app)
     app.cli.add_command(create_developer_command)
     app.cli.add_command(create_school_command)
-    # --- DAFTARKAN COMMAND BARU ---
     app.cli.add_command(reindex_all_command)    
+    app.cli.add_command(seed_command)
+    
+@click.group('seed')
+def seed_command():
+    """Perintah untuk seeding data awal."""
+    pass
+
+@seed_command.command('subjects')
+@with_appcontext
+def seed_subjects_command():
+    """Seed data mata pelajaran awal."""
+    seed_subjects()

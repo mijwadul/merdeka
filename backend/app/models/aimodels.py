@@ -1,6 +1,8 @@
 # backend/app/models/aimodels.py
 
 from app.extensions import db
+from sqlalchemy import Enum, Text, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.mysql import JSON
 from sqlalchemy.sql import func
 
@@ -19,7 +21,6 @@ class Layout(db.Model):
     uploaded_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     status = db.Column(db.String(20), default='aktif')
     created_at = db.Column(db.TIMESTAMP, server_default=func.now())
-    # --- TAMBAHAN: Relasi balik ke User ---
     uploader = db.relationship('User', back_populates='layouts')
 
 class Book(db.Model):
@@ -31,12 +32,10 @@ class Book(db.Model):
     penulis = db.Column(db.String(255))
     tahun_terbit = db.Column(db.Integer)
     file_path = db.Column(db.String(255), nullable=False)
-    topic_json = db.Column(JSON, nullable=True) # Untuk menyimpan daftar isi
+    topic_json = db.Column(JSON, nullable=True)
     uploaded_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.TIMESTAMP, server_default=func.now())
-    
     media_assets = db.relationship('MediaAsset', backref='book', lazy=True, cascade="all, delete-orphan")
-    # --- TAMBAHAN: Relasi balik ke User ---
     uploader = db.relationship('User', back_populates='books')
 
 class MediaAsset(db.Model):
@@ -44,43 +43,67 @@ class MediaAsset(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'), nullable=False)
     tipe_media = db.Column(db.String(20), nullable=False)
-    caption = db.Column(db.Text)
+    caption = db.Column(Text)
     halaman = db.Column(db.Integer)
     topik_terkait = db.Column(db.String(255))
     file_path = db.Column(db.String(255), nullable=False)
     resolusi = db.Column(db.String(50))
     created_at = db.Column(db.TIMESTAMP, server_default=func.now())
-    
     soal = db.relationship('Soal', backref='media_asset', lazy=True)
 
 # ============================================================
-# TABEL INTI KURIKULUM (SESUAI ALUR WIZARD)
+# TABEL BARU DAN YANG DIPERBAIKI (CP, Elemen, ATP)
 # ============================================================
+
+class Elemen(db.Model):
+    """Tabel master untuk elemen-elemen per mata pelajaran."""
+    __tablename__ = 'elemen'
+    id = db.Column(db.Integer, primary_key=True)
+    subject_id = db.Column(db.Integer, ForeignKey('subjects.id'), nullable=False)
+    nama_elemen = db.Column(db.String(255), nullable=False)
+    kode_elemen = db.Column(db.String(20), nullable=True)
+    deskripsi = db.Column(Text, nullable=True)
+    
+    subject = relationship('Subject', back_populates='elements')
+    cps = relationship('CP', back_populates='elemen', cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f'<Elemen {self.nama_elemen}>'
+
 class CP(db.Model):
+    """Model CP baru yang terstruktur dan relasional."""
     __tablename__ = 'cp'
     id = db.Column(db.Integer, primary_key=True)
-    jenjang = db.Column(db.String(50), nullable=False)
-    mapel = db.Column(db.String(100), nullable=False)
-    kode_cp = db.Column(db.String(100), nullable=True)  # misalnya: "CP-IPA-01"
-    isi_cp = db.Column(db.Text, nullable=False)
-    sumber_dokumen = db.Column(db.String(255))  # opsional: nama file CP
-    uploaded_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    elemen_id = db.Column(db.Integer, ForeignKey('elemen.id'), nullable=False)
+    fase = db.Column(Enum('A', 'B', 'C', 'D', 'E', 'F', name='fase_cp_enum'), nullable=False)
+    isi_cp = db.Column(Text, nullable=False)
+    sumber_dokumen = db.Column(db.String(255), nullable=True)
+    uploaded_by_id = db.Column(db.Integer, ForeignKey('user.id'), nullable=True)
     created_at = db.Column(db.TIMESTAMP, server_default=func.now())
+
+    elemen = relationship('Elemen', back_populates='cps')
+    uploader = relationship('User')
+    atps = relationship('Atp', back_populates='cp', lazy=True) # Relasi balik ke ATP
+
+    def __repr__(self):
+        return f'<CP Fase {self.fase} - {self.elemen.nama_elemen}>'
+
+# ============================================================
+# TABEL INTI KURIKULUM (LANJUTAN ALUR WIZARD)
+# ============================================================
 
 class Prota(db.Model):
     __tablename__ = 'prota'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    mapel = db.Column(db.String(100), nullable=False)
+    mapel = db.Column(db.String(100), nullable=False) # CATATAN: bisa direlasi ke Subject di masa depan
     jenjang = db.Column(db.String(50), nullable=False)
     tahun_ajaran = db.Column(db.String(20), nullable=False)
     items_json = db.Column(JSON)
     status_validasi = db.Column(db.String(20), default='draft')
     created_at = db.Column(db.TIMESTAMP, server_default=func.now())
     updated_at = db.Column(db.TIMESTAMP, server_default=func.now(), onupdate=func.now())
-
     promes = db.relationship('Promes', backref='prota', lazy=True, cascade="all, delete-orphan")
-    # --- TAMBAHAN: Relasi balik ke User ---
     user = db.relationship('User', back_populates='prota')
 
 class Promes(db.Model):
@@ -93,20 +116,24 @@ class Promes(db.Model):
     status_validasi = db.Column(db.String(20), default='draft')
     created_at = db.Column(db.TIMESTAMP, server_default=func.now())
     updated_at = db.Column(db.TIMESTAMP, server_default=func.now(), onupdate=func.now())
-
     atp = db.relationship('Atp', backref='promes', lazy=True, cascade="all, delete-orphan")
 
 class Atp(db.Model):
     __tablename__ = 'atp'
     id = db.Column(db.Integer, primary_key=True)
     promes_id = db.Column(db.Integer, db.ForeignKey('promes.id'), nullable=True)
-    cp_id = db.Column(db.String(255))
+    
+    # --- PERBAIKAN UTAMA ---
+    # Menghubungkan ATP ke CP dengan Foreign Key, bukan string
+    cp_id = db.Column(db.Integer, db.ForeignKey('cp.id'), nullable=False)
+    
     tujuan_pembelajaran = db.Column(db.Text, nullable=False)
     indikator_pencapaian = db.Column(db.Text)
     status_validasi = db.Column(db.String(20), default='draft')
     created_at = db.Column(db.TIMESTAMP, server_default=func.now())
     updated_at = db.Column(db.TIMESTAMP, server_default=func.now(), onupdate=func.now())
     
+    cp = relationship('CP', back_populates='atps') # Relasi ke CP
     modul_ajar = db.relationship('ModulAjar', backref='atp', lazy=True, cascade="all, delete-orphan")
 
 class ModulAjar(db.Model):
@@ -118,7 +145,6 @@ class ModulAjar(db.Model):
     status_validasi = db.Column(db.String(20), default='draft')
     created_at = db.Column(db.TIMESTAMP, server_default=func.now())
     updated_at = db.Column(db.TIMESTAMP, server_default=func.now(), onupdate=func.now())
-
     soal = db.relationship('Soal', backref='modul_ajar', lazy=True, cascade="all, delete-orphan")
 
 class Soal(db.Model):
@@ -133,4 +159,3 @@ class Soal(db.Model):
     status_validasi = db.Column(db.String(20), default='draft')
     created_at = db.Column(db.TIMESTAMP, server_default=func.now())
     updated_at = db.Column(db.TIMESTAMP, server_default=func.now(), onupdate=func.now())
-

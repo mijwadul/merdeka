@@ -1,18 +1,23 @@
-import React from 'react';
+// frontend/src/pages/AITools.jsx
+
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Grid, Paper,
-  Avatar, useTheme
+  Avatar, useTheme, Button, Dialog,
+  DialogActions, DialogContent, DialogContentText, DialogTitle
 } from '@mui/material';
 import { motion } from 'framer-motion';
 
-// Import ikon baru
+// Import ikon
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
 import ScienceIcon from '@mui/icons-material/Science';
-
 import AIToolsImage from '../../assets/AI.png';
+
+// Import komponen Modal Konfirmasi yang sudah ada
+import ConfirmationModal from '../../components/common/ConfirmationModal';
 
 const pageVariants = {
   initial: { opacity: 0, scale: 0.9 },
@@ -29,16 +34,19 @@ const pageTransition = {
 function AITools() {
   const navigate = useNavigate();
   const theme = useTheme();
+  const [modalOpen, setModalOpen] = useState(false);
 
   const tools = [
     {
+      id: 'layout_retriever',
       title: '1. Layout Retriever',
       description: 'Unggah template layout dokumen resmi (Prota, Modul Ajar) sebagai referensi utama untuk AI.',
       icon: <CloudUploadIcon fontSize="large" />,
-      path: '/aitools/layout-retriever', // Path baru untuk halaman layout retriever
+      path: '/aitools/layout-retriever',
       enabled: true,
     },
     {
+      id: 'book_retriever',
       title: '2. Book Retriever',
       description: 'Unggah buku pegangan guru atau siswa. Sistem akan mengekstrak materi dan gambar secara otomatis.',
       icon: <MenuBookIcon fontSize="large" />,
@@ -46,20 +54,38 @@ function AITools() {
       enabled: true,
     },
     {
-      title: '3. Wizard Generator',
-      description: 'Mulai proses pembuatan dokumen secara bertahap, dari Prota hingga soal, dibantu oleh AI.',
+      id: 'cp_uploader',
+      title: '3. Upload CP',
+      description: 'Unggah dokumen Capaian Pembelajaran (CP) resmi sebagai fondasi utama pembuatan dokumen.',
       icon: <AutoStoriesIcon fontSize="large" />,
-      path: '#', // Belum aktif
-      enabled: false,
+      path: '/aitools/cp-upload', // Path ke halaman baru
+      enabled: true, // Kita aktifkan
     },
     {
+      id: 'ai_validator',
       title: '4. AI Validator',
       description: 'Periksa kesesuaian dan kualitas dokumen yang dihasilkan AI berdasarkan layout dan buku acuan.',
       icon: <ScienceIcon fontSize="large" />,
-      path: '#', // Belum aktif
+      path: '#',
       enabled: false,
     },
   ];
+
+  const handleToolClick = (tool) => {
+    if (!tool.enabled) return;
+
+    // Khusus untuk tool upload CP, tampilkan modal dulu
+    if (tool.id === 'cp_uploader') {
+      setModalOpen(true);
+    } else {
+      navigate(tool.path);
+    }
+  };
+
+  const handleConfirmNavigation = () => {
+    setModalOpen(false);
+    navigate('/aitools/cp-upload'); // Arahkan ke halaman upload CP setelah konfirmasi
+  };
 
   return (
     <motion.div
@@ -105,7 +131,7 @@ function AITools() {
                   cursor: tool.enabled ? 'pointer' : 'not-allowed',
                   backgroundColor: tool.enabled ? 'background.paper' : theme.palette.action.hover,
                 }}
-                onClick={() => tool.enabled && navigate(tool.path)}
+                onClick={() => handleToolClick(tool)}
               >
                 <Avatar
                   sx={{
@@ -126,6 +152,15 @@ function AITools() {
           ))}
         </Grid>
       </Box>
+
+      {/* Gunakan Komponen Modal yang sudah ada */}
+      <ConfirmationModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onConfirm={handleConfirmNavigation}
+        title="Konfirmasi Navigasi"
+        message="Anda akan diarahkan ke halaman untuk mengunggah dokumen Capaian Pembelajaran (CP). Pastikan Anda sudah menyiapkan file .txt dari CP resmi. Lanjutkan?"
+      />
     </motion.div>
   );
 }
