@@ -8,7 +8,6 @@ from app.extensions import db
 from app.models import Layout
 import docx
 import fitz  # PyMuPDF
-# --- TAMBAHKAN IMPORT INI ---
 from app.services.rag_service import add_to_collection
 
 layout_bp = Blueprint('layout_bp', __name__)

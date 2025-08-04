@@ -56,6 +56,16 @@ class MediaAsset(db.Model):
 # ============================================================
 # TABEL INTI KURIKULUM (SESUAI ALUR WIZARD)
 # ============================================================
+class CP(db.Model):
+    __tablename__ = 'cp'
+    id = db.Column(db.Integer, primary_key=True)
+    jenjang = db.Column(db.String(50), nullable=False)
+    mapel = db.Column(db.String(100), nullable=False)
+    kode_cp = db.Column(db.String(100), nullable=True)  # misalnya: "CP-IPA-01"
+    isi_cp = db.Column(db.Text, nullable=False)
+    sumber_dokumen = db.Column(db.String(255))  # opsional: nama file CP
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_at = db.Column(db.TIMESTAMP, server_default=func.now())
 
 class Prota(db.Model):
     __tablename__ = 'prota'
@@ -123,3 +133,4 @@ class Soal(db.Model):
     status_validasi = db.Column(db.String(20), default='draft')
     created_at = db.Column(db.TIMESTAMP, server_default=func.now())
     updated_at = db.Column(db.TIMESTAMP, server_default=func.now(), onupdate=func.now())
+

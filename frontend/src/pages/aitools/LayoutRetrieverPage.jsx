@@ -120,7 +120,13 @@ const LayoutRetrieverPage = () => {
           
           {mapel === '__custom__' && <Grid item xs={12}><TextField fullWidth required label="Ketik Mata Pelajaran Baru" value={customMapel} onChange={(e) => setCustomMapel(e.target.value)} helperText="Mata pelajaran ini akan disimpan."/></Grid>}
            
-          <Grid item xs={12}><FormControl fullWidth required><InputLabel>Tipe Dokumen</InputLabel><Select label="Tipe Dokumen" value={tipeDokumen} onChange={(e) => setTipeDokumen(e.target.value)}><MenuItem value="Prota">Program Tahunan (Prota)</MenuItem><MenuItem value="Promes">Program Semester (Promes)</MenuItem><MenuItem value="ATP">Alur Tujuan Pembelajaran (ATP)</MenuItem><MenuItem value="Modul Ajar">Modul Ajar</MenuItem></Select></FormControl></Grid>
+          <Grid item xs={12}><FormControl fullWidth required><InputLabel>Tipe Dokumen</InputLabel><Select label="Tipe Dokumen" value={tipeDokumen} onChange={(e) => setTipeDokumen(e.target.value)}>
+                              <MenuItem value="Prota">Program Tahunan (Prota)</MenuItem>
+                              <MenuItem value="Promes">Program Semester (Promes)</MenuItem>
+                              <MenuItem value="ATP">Alur Tujuan Pembelajaran (ATP)</MenuItem>
+                              <MenuItem value="Modul Ajar">Modul Ajar</MenuItem>
+                              </Select>
+                              </FormControl></Grid>
           
           <Grid item xs={12}><Button type="submit" variant="contained" size="large" disabled={isLoading || !file} startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <CloudUploadIcon />}>{isLoading ? 'Memproses...' : 'Unggah & Simpan Layout'}</Button></Grid>
         </Grid>
