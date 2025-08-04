@@ -17,6 +17,7 @@ const pageVariants = {
   in: { opacity: 1, rotateY: 0 },
   out: { opacity: 0, rotateY: 90 },
 };
+
 const pageTransition = { type: 'tween', ease: 'anticipate', duration: 0.5 };
 
 function ClassManagementPage() {
@@ -25,7 +26,6 @@ function ClassManagementPage() {
   const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingClass, setEditingClass] = useState(null);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -40,7 +40,8 @@ function ClassManagementPage() {
       const classResponse = await axios.get('http://localhost:5000/api/classes', { headers });
       setClasses(classResponse.data);
 
-      if (user?.role === 'Developer') {
+      // Tetap ambil data sekolah untuk keperluan form modal
+      if (user?.role === 'Developer' || user?.role === 'School Admin') {
         const schoolResponse = await axios.get('http://localhost:5000/api/schools', { headers });
         setSchools(schoolResponse.data);
       }
@@ -52,17 +53,10 @@ function ClassManagementPage() {
   };
 
   useEffect(() => {
-  console.log('[DEBUG] user:', user);
-  if (user && ['Developer', 'School Admin', 'Teacher'].includes(user.role)) {
-    console.log('[DEBUG] Role allowed, fetching data...');
-    fetchData();
-  } else if (user) {
-    console.log('[DEBUG] Role not allowed:', user.role);
-    setLoading(false);
-    setError('You do not have permission to view this page.');
-  }
-}, [user]);
-
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
 
   const handleOpenCreateModal = () => {
     setEditingClass(null);
@@ -118,14 +112,6 @@ function ClassManagementPage() {
     } finally {
       handleCloseConfirmModal();
     }
-  };
-
-  const getSchoolName = (schoolId) => {
-    if (user?.role === 'Developer') {
-      const school = schools.find(s => s.id === schoolId);
-      return school ? school.name : 'N/A';
-    }
-    return user?.school?.name || 'Your School';
   };
 
   if (loading) {
@@ -184,7 +170,7 @@ function ClassManagementPage() {
               {classes.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>{row.class_name}</TableCell>
-                  {user?.role === 'Developer' && <TableCell>{getSchoolName(row.school_id)}</TableCell>}
+                  {user?.role === 'Developer' && <TableCell>{row.school || 'N/A'}</TableCell>}
                   <TableCell>{row.subject || '-'}</TableCell>
                   <TableCell>{row.teacher || '-'}</TableCell>
                   <TableCell align="right">
