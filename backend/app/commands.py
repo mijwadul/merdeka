@@ -8,7 +8,6 @@ import threading
 from flask import current_app
 from .services.rag_service import add_to_collection
 from .services.book_processing_service import extract_book_content_and_media
-from .routes.layout_routes import parse_docx_to_json_and_text, parse_pdf_to_json_and_text
 from .seeds import seed_subjects
 
 bcrypt = Bcrypt()

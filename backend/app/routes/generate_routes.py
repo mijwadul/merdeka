@@ -1,150 +1,189 @@
 # backend/app/routes/generate_routes.py
 
-from flask import Blueprint, request, jsonify
-from app.services.rag_service import search_index
-from app.services.ai_service import generate_content_with_context
-from app.utils.decorators import token_required
-from app.models import Class, Subject, GeneratedDocument
+from flask import Blueprint, request, jsonify, current_app
 from app.extensions import db
-from app.services.agent_service import generate_document_with_agents
-from sqlalchemy import distinct
+from app.utils.decorators import token_required
+from app.models import Class, Book, Layout, Prota, User
+import requests
 import json
-from io import BytesIO
-from flask import send_file
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.units import inch
+import os
 import re
+import google.generativeai as genai
 
-# Menggunakan satu blueprint untuk semua rute terkait generator
+
 generator_bp = Blueprint('generator_bp', __name__)
 
-# --- FUNGSI LAMA (Sekarang di bawah blueprint yang benar) ---
-@generator_bp.route('/api/generate', methods=['POST'])
-@token_required # Sebaiknya endpoint ini juga diamankan
-def generate(current_user):
-    data = request.get_json()
-    if not data or 'query' not in data:
-        return jsonify({"error": "Query is required."}), 400
+# --- AGENT-AGENT PEMBANTU ---
 
-    query = data['query']
-    context_chunks = search_index(query)
-
-    if not context_chunks:
-        return jsonify({"error": "Could not find relevant context in the uploaded documents."}), 404
-
-    generated_content = generate_content_with_context(query, context_chunks)
-    return jsonify({"content": generated_content}), 200
-
-# --- FUNGSI BARU 1: Endpoint untuk Data Form ---
-@generator_bp.route('/api/generator/form-data', methods=['GET'])
-@token_required
-def get_generator_form_data(current_user):
-    if current_user.role == 'Teacher':
-        classes_taught = Class.query.filter_by(teacher_id=current_user.id).all()
-        unique_subjects = {cls.subject for cls in classes_taught if cls.subject}
-        subjects = sorted([s.to_dict() for s in unique_subjects], key=lambda x: x['name'])
-        grades = sorted(list(set([cls.grade_level for cls in classes_taught])))
-        
-        return jsonify({
-            'subjects': subjects,
-            'classes': grades
-        })
-
-    elif current_user.role == 'Developer':
-        all_subjects = Subject.query.order_by(Subject.name).all()
-        return jsonify({
-            'subjects': [s.to_dict() for s in all_subjects],
-            'classes': []
-        })
-        
-    return jsonify({"error": "Access Denied"}), 403
-
-# --- FUNGSI BARU 2: Endpoint untuk Generator Berbasis Agen ---
-@generator_bp.route('/api/generate/document-agent', methods=['POST'])
-@token_required
-def generate_document_agent(current_user):
-    data = request.get_json()
-    kelas = data.get('kelas')
-    mapel_id = data.get('mapel')
-    jenis = data.get('jenis')
-    topik = data.get('topik')
-
-    if not all([kelas, mapel_id, jenis, topik]):
-        return jsonify({"error": "Data tidak lengkap: kelas, mapel, jenis, dan topik dibutuhkan."}), 400
-
-    subject = Subject.query.get(mapel_id)
-    if not subject:
-        return jsonify({"error": "Mata pelajaran tidak ditemukan."}), 404
+def get_prota_layout(class_obj):
+    """
+    Layout Agent: Mengambil layout_json untuk Prota berdasarkan jenjang dan mapel.
+    """
+    subject_name = class_obj.subject.name
     
+    if 1 <= class_obj.grade_level <= 6:
+        jenjang = 'SD'
+    elif 7 <= class_obj.grade_level <= 9:
+        jenjang = 'SMP'
+    elif 10 <= class_obj.grade_level <= 12:
+        jenjang = 'SMA'
+    else:
+        raise ValueError("Grade level tidak valid.")
+
+    layout = Layout.query.filter_by(
+        jenjang=jenjang,
+        mapel=subject_name,
+        tipe_dokumen='Prota'
+    ).order_by(Layout.created_at.desc()).first()
+
+    if not layout or not layout.layout_json:
+        raise FileNotFoundError(f"Layout Prota untuk {subject_name} jenjang {jenjang} tidak ditemukan atau belum diproses.")
+    
+    return layout.layout_json
+
+def get_book_topic_json(class_obj):
+    """
+    Content Agent (part 1): Mengambil topic_json dari buku yang relevan.
+    """
+    subject_name = class_obj.subject.name
+
+    if 1 <= class_obj.grade_level <= 6:
+        jenjang = 'SD'
+    elif 7 <= class_obj.grade_level <= 9:
+        jenjang = 'SMP'
+    elif 10 <= class_obj.grade_level <= 12:
+        jenjang = 'SMA'
+    else:
+        raise ValueError("Grade level tidak valid.")
+        
+    book = Book.query.filter_by(
+        jenjang=jenjang,
+        mapel=subject_name,
+    ).order_by(Book.created_at.desc()).first()
+
+    if not book or not book.topic_json or not book.topic_json.get("chapters"):
+        raise FileNotFoundError(f"Buku ajar untuk {subject_name} jenjang {jenjang} tidak ditemukan atau belum selesai diproses (topic_json kosong).")
+
+    return book.topic_json
+
+def writer_agent_generate_prota_items(smart_template, topics, class_obj, user):
+    """
+    Writer Agent (Versi 5.0): Menggunakan template cerdas untuk menghasilkan daftar item.
+    """
+    google_api_key = os.getenv('GOOGLE_API_KEY')
+    if not google_api_key:
+        raise ValueError("GOOGLE_API_KEY tidak ditemukan di file .env")
+    genai.configure(api_key=google_api_key)
+
+    # Mengambil instruksi dari template cerdas
+    list_placeholder = smart_template.get('main_list_placeholder', 'items')
+    item_structure = smart_template.get('item_structure', {})
+
+    prompt = f"""
+Anda adalah AI ahli kurikulum yang sangat efisien.
+Tugas Anda adalah membuat daftar (list) item untuk sebuah Program Tahunan (Prota) berdasarkan struktur item dan daftar topik yang diberikan.
+
+# KONTEKS
+- Mata Pelajaran: {class_obj.subject.name}
+- Kelas: {class_obj.grade_level}
+
+# INPUT
+1. DAFTAR TOPIK DARI BUKU (Konten yang harus diproses):
+{json.dumps(topics, indent=2)}
+
+2. STRUKTUR UNTUK SETIAP ITEM (Gunakan ini sebagai format untuk setiap topik):
+{json.dumps(item_structure, indent=2)}
+
+# PERINTAH
+1. Untuk setiap topik dalam `DAFTAR TOPIK DARI BUKU`, buat sebuah objek JSON yang mengikuti `STRUKTUR UNTUK SETIAP ITEM`.
+2. Isi setiap kolom (seperti "Materi Pokok", "Semester", dll.) dengan informasi yang relevan dari topik tersebut.
+3. Berikan estimasi "Alokasi Waktu" yang logis untuk setiap topik dalam satuan Jam Pelajaran (JP).
+4. Hasil akhir HARUS berupa objek JSON tunggal dengan satu kunci utama bernama "{list_placeholder}", yang nilainya adalah sebuah array (list) dari semua item yang telah Anda buat.
+
+Contoh Output yang Diharapkan:
+{{
+  "{list_placeholder}": [
+    {{
+      "materi_pokok": "Topik Pertama",
+      "alokasi_waktu": "12 JP",
+      "semester": 1
+    }},
+    {{
+      "materi_pokok": "Topik Kedua",
+      "alokasi_waktu": "15 JP",
+      "semester": 1
+    }}
+  ]
+}}
+
+Pastikan output Anda HANYA berupa objek JSON yang valid tanpa teks tambahan.
+"""
+
     try:
-        final_document = generate_document_with_agents(str(kelas), subject.name, jenis, topik)
-        return jsonify({"text": final_document})
+        print("[BACKEND-DEBUG] Mengirim request ke Google Gemini dengan template cerdas...")
+        generation_config = genai.GenerationConfig(response_mime_type="application/json")
+        # Menggunakan nama model yang sudah dikonfirmasi
+        model = genai.GenerativeModel('gemini-2.5-flash', generation_config=generation_config)
+        
+        response = model.generate_content(prompt)
+        print("[BACKEND-DEBUG] Menerima respons dari Google Gemini.")
+
+        # Parser JSON yang toleran tetap kita pertahankan untuk keamanan
+        return json.loads(response.text, strict=False)
+
     except Exception as e:
-        print(f"Error during agent generation: {e}")
-        return jsonify({"error": "Gagal menghasilkan dokumen. Terjadi kesalahan pada sistem agen AI."}), 500
+        print(f"[WRITER_AGENT_ERROR] Gagal saat generate dengan template cerdas: {e}")
+        if 'response' in locals():
+            print(f"[BACKEND-DEBUG] Teks mentah dari Gemini: {response.text}")
+        raise ConnectionError(f"Gagal memproses respons dari API Gemini: {e}")
 
-# --- FUNGSI BARU 3: Endpoint untuk Menyimpan Dokumen ---
-@generator_bp.route('/api/docs/save', methods=['POST'])
+
+# --- RUTE API UTAMA UNTUK WIZARD ---
+@generator_bp.route('/api/wizard/generate/prota', methods=['POST'])
 @token_required
-def save_generated_document(current_user):
+def generate_prota_route(current_user):
     data = request.get_json()
-    title = f"{data.get('jenis')} {data.get('mapel')} Kelas {data.get('kelas')} - {data.get('topik')}"
-    new_doc = GeneratedDocument(
-        title=title,
-        document_type=data.get('jenis'),
-        subject=data.get('mapel'),
-        grade_level=data.get('kelas'),
-        content=data.get('content'),
-        created_by_id=current_user.id
-    )
-    db.session.add(new_doc)
-    db.session.commit()
-    return jsonify({"message": "Dokumen berhasil disimpan!", "document": new_doc.to_dict()}), 201
+    class_id = data.get('class_id')
 
-# --- FUNGSI BARU 4: Endpoint untuk Mengambil Daftar Dokumen ---
-@generator_bp.route('/api/docs', methods=['GET'])
-@token_required
-def get_saved_documents(current_user):
-    documents = GeneratedDocument.query.filter_by(created_by_id=current_user.id).order_by(GeneratedDocument.created_at.desc()).all()
-    return jsonify([doc.to_dict() for doc in documents])
+    if not class_id:
+        return jsonify({"msg": "Class ID wajib diisi."}), 400
 
-# --- FUNGSI BARU 5: Endpoint untuk Download PDF ---
-@generator_bp.route('/api/docs/download-pdf', methods=['POST'])
-@token_required
-def download_document_as_pdf(current_user):
-    data = request.get_json()
-    content = data.get('content', '')
-    title = data.get('title', 'Dokumen GatraSinau.AI')
-
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, rightMargin=inch, leftMargin=inch, topMargin=inch, bottomMargin=inch)
-    styles = getSampleStyleSheet()
-    story = []
+    target_class = Class.query.get(class_id)
+    if not target_class:
+        return jsonify({"msg": "Kelas tidak ditemukan."}), 404
     
-    story.append(Paragraph(title, styles['h1']))
-    story.append(Spacer(1, 0.2 * inch))
+    if target_class.teacher_id != current_user.id and current_user.role != 'Developer':
+        return jsonify({"msg": "Anda tidak memiliki akses ke kelas ini."}), 403
 
-    lines = content.split('\n')
-    for line in lines:
-        line_formatted = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', line)
-        p = Paragraph(line_formatted, styles['BodyText'])
-        story.append(p)
+    try:
+        # TAHAP ORKESTRASI SUPERVISOR AGENT
+        layout_structure = get_prota_layout(target_class)
+        topics = get_book_topic_json(target_class)
+        generated_items_json = writer_agent_generate_prota_items(
+            layout_structure, topics, target_class, current_user
+        )
 
-    doc.build(story)
-    buffer.seek(0)
-    safe_filename = "".join([c for c in title if c.isalpha() or c.isdigit() or c == ' ']).rstrip() + ".pdf"
+        # Simpan Prota baru ke Database
+        new_prota = Prota(
+            user_id=current_user.id,
+            mapel=target_class.subject.name,
+            jenjang=str(target_class.grade_level),
+            tahun_ajaran="2024/2025",
+            items_json=generated_items_json,
+            status_validasi='draft'
+        )
+        db.session.add(new_prota)
+        db.session.commit()
 
-    return send_file(
-        buffer,
-        as_attachment=True,
-        download_name=safe_filename,
-        mimetype='application/pdf'
-    )
+        return jsonify({
+            "msg": f"Prota untuk {target_class.subject.name} kelas {target_class.grade_level} berhasil dibuat!",
+            "prota_id": new_prota.id,
+            "data": new_prota.items_json
+        }), 201
 
-@generator_bp.route('/api/docs/<int:doc_id>', methods=['GET'])
-@token_required
-def get_saved_document(current_user, doc_id):
-    # Ambil dokumen berdasarkan ID dan pastikan pemiliknya adalah user yang sedang login
-    doc = GeneratedDocument.query.filter_by(id=doc_id, created_by_id=current_user.id).first_or_404()
-    return jsonify(doc.to_dict())
+    except (FileNotFoundError, ValueError, ConnectionError) as e:
+        return jsonify({"msg": str(e)}), 400
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Error generating Prota: {e}")
+        return jsonify({"msg": "Terjadi kesalahan internal saat membuat Prota.", "error": str(e)}), 500

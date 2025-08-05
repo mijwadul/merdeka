@@ -7,6 +7,7 @@ from .extensions import db, migrate
 from app.routes.retriever import retriever_bp
 from .routes.layout_routes import layout_bp
 from .routes.book_routes import book_bp
+from .routes.wizard_data_routes import wizard_data_bp
 
 def create_app():
     """Create and configure an instance of the Flask application."""
@@ -53,7 +54,8 @@ def create_app():
     )
     app.register_blueprint(upload_routes.upload_bp)
     app.register_blueprint(status_routes.status_bp)
-    app.register_blueprint(generate_routes.generator_bp)  # jika sebelumnya pakai generate_bp, pastikan diperbaiki
+    app.register_blueprint(generate_routes.generator_bp)
+    app.register_blueprint(wizard_data_bp, url_prefix='/api')
     app.register_blueprint(auth_routes.auth_bp)
     app.register_blueprint(user_management_routes.user_mgmt_bp)
     app.register_blueprint(class_routes.class_bp)

@@ -13,7 +13,7 @@ import { motion } from 'framer-motion';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import AutoStoriesIcon from '@mui/icons-material/AutoStories';
-import ScienceIcon from '@mui/icons-material/Science';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import AIToolsImage from '../../assets/AI.png';
 
 // Import komponen Modal Konfirmasi yang sudah ada
@@ -62,12 +62,12 @@ function AITools() {
       enabled: true, // Kita aktifkan
     },
     {
-      id: 'ai_validator',
-      title: '4. AI Validator',
-      description: 'Periksa kesesuaian dan kualitas dokumen yang dihasilkan AI berdasarkan layout dan buku acuan.',
-      icon: <ScienceIcon fontSize="large" />,
-      path: '#',
-      enabled: false,
+      id: 'wizard_generator',
+      title: '4. Wizard Generator',
+      description: 'Mulai proses pembuatan dokumen (Prota, Promes, ATP, dst.) secara terstruktur dan terpandu.',
+      icon: <AutoFixHighIcon fontSize="large" />,
+      path: '/aitools/generator-wizard',
+      enabled: true,
     },
   ];
 
