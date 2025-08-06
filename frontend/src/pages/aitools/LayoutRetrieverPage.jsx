@@ -9,6 +9,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import ListAltIcon from '@mui/icons-material/ListAlt'; // --- TAMBAHAN ---
+import { useNavigate } from 'react-router-dom'; // --- TAMBAHAN ---
 import axios from 'axios';
 import CustomAlert from '../../components/common/CustomAlert';
 
@@ -26,6 +28,7 @@ const pageTransition = {
 
 const LayoutRetrieverPage = () => {
   const theme = useTheme();
+  const navigate = useNavigate(); // --- TAMBAHAN ---
   const [file, setFile] = useState(null);
   const [jenjang, setJenjang] = useState('');
   const [mapelId, setMapelId] = useState('');
@@ -40,7 +43,6 @@ const LayoutRetrieverPage = () => {
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        // --- THIS IS THE CORRECTED LINE ---
         const response = await axios.get('http://localhost:5000/api/subjects', createAuthHeaders());
         setSubjects(response.data);
       } catch (error) {
@@ -95,7 +97,6 @@ const LayoutRetrieverPage = () => {
       setAlertInfo({ type: 'success', show: true, title: 'Berhasil', message: `Layout berhasil diunggah! ID: ${response.data.layout_id}` });
       setFile(null); setJenjang(''); setMapelId(''); setCustomMapel(''); setTipeDokumen('');
       if (isCustomMapel) {
-        // Refresh subject list
         const subjectRes = await axios.get('http://localhost:5000/api/subjects', createAuthHeaders());
         setSubjects(subjectRes.data);
       }
@@ -110,10 +111,26 @@ const LayoutRetrieverPage = () => {
     <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
       <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: '700px', mx: 'auto' }}>
         <Stack spacing={4} component="form" onSubmit={handleSubmit}>
+          
+          {/* --- BAGIAN YANG DIUBAH --- */}
           <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="h4" gutterBottom fontWeight="bold">Layout Retriever</Typography>
-            <Typography variant="subtitle1" color="text.secondary">Unggah file template (.docx atau .pdf) untuk dijadikan acuan oleh AI.</Typography>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                <Typography variant="h4" gutterBottom fontWeight="bold" sx={{ mb: 0 }}>
+                    Layout Retriever
+                </Typography>
+                <Button
+                    variant="outlined"
+                    startIcon={<ListAltIcon />}
+                    onClick={() => navigate('/layouts')}
+                >
+                    Lihat Database
+                </Button>
+            </Stack>
+            <Typography variant="subtitle1" color="text.secondary">
+                Unggah file template (.docx atau .pdf) untuk dijadikan acuan oleh AI.
+            </Typography>
           </Box>
+          {/* --- AKHIR PERUBAHAN --- */}
 
           <AnimatePresence>{alertInfo.show && <CustomAlert {...alertInfo} onClose={() => setAlertInfo({ ...alertInfo, show: false })} />}</AnimatePresence>
 

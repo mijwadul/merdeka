@@ -6,7 +6,7 @@ import {
   Box, Typography, Button, Paper, FormControl, InputLabel,
   Select, MenuItem, Stack, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, useTheme,
-  LinearProgress, Divider // Ditambahkan Divider
+  LinearProgress, Divider, CircularProgress
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import CustomAlert from '../../components/common/CustomAlert';
@@ -14,7 +14,6 @@ import { Document, Packer, Paragraph, Table as DocxTable, TableCell as DocxTable
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-// --- AKHIR BAGIAN BARU ---
 
 const getAuthToken = () => localStorage.getItem('authToken');
 const createAuthHeaders = () => ({ headers: { 'Authorization': `Bearer ${getAuthToken()}` } });
@@ -165,7 +164,6 @@ const GeneratorWizardPage = () => {
     }
   }
 
-  // --- BAGIAN BARU: Fungsi untuk menangani download DOCX ---
   const handleDownloadDocx = () => {
     if (itemsToRender.length === 0) return;
 
@@ -200,7 +198,6 @@ const GeneratorWizardPage = () => {
     });
   };
 
-  // --- BAGIAN BARU: Fungsi untuk menangani download PDF ---
   const handleDownloadPdf = () => {
     if (itemsToRender.length === 0) return;
     const doc = new jsPDF();
@@ -218,7 +215,6 @@ const GeneratorWizardPage = () => {
 
     doc.save("Prota_Generated.pdf");
   };
-  // --- AKHIR BAGIAN BARU ---
 
   return (
     <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
@@ -256,15 +252,22 @@ const GeneratorWizardPage = () => {
 
           <Paper elevation={2} sx={{ p: 3, borderRadius: 3, opacity: selectedClass ? 1 : 0.5 }}>
             <Typography variant="h6" fontWeight={600} gutterBottom>Langkah 2: Program Tahunan (Prota)</Typography>
-            <Box sx={{ mt: 2, textAlign: 'center' }}>
+            <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
               <Button
                 variant="contained"
                 size="large"
                 onClick={initiateGenerationAndListen}
                 disabled={!selectedClass || isGenerating}
-                sx={{ minWidth: 200 }}
+                sx={{ minWidth: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
-                {isGenerating ? 'Sedang Membuat...' : 'Buat Draf Prota'}
+                {isGenerating ? (
+                  <>
+                    <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />
+                    Sedang Membuat...
+                  </>
+                ) : (
+                  'Buat Draf Prota'
+                )}
               </Button>
             </Box>
             <AnimatePresence>
@@ -276,18 +279,61 @@ const GeneratorWizardPage = () => {
             </AnimatePresence>
           </Paper>
 
-          <AnimatePresence>
+                    <AnimatePresence>
             {itemsToRender.length > 0 && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <Paper elevation={3} sx={{ p: 3, mt: 2, borderRadius: 3 }}>
                   <Typography variant="h6" gutterBottom>Hasil Draf Prota</Typography>
-                  
-                  {/* --- BAGIAN BARU: Teks informasi simpan otomatis --- */}
-                  <Typography variant="body2" color="text.secondary" sx={{mb: 2}}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                     Draf ini sudah tersimpan otomatis di akun Anda. Anda dapat mengekspornya di bawah ini.
                   </Typography>
-                  {/* --- AKHIR BAGIAN BARU --- */}
 
+                  {/* ✅ Tambahan: Document Structure */}
+                  {generatedProta?.data?.document_structure && (
+                    <Box sx={{ mb: 4 }}>
+                      <Typography variant="h5" fontWeight="bold" gutterBottom>
+                        {generatedProta.data.document_structure.judul || "Program Tahunan"}
+                      </Typography>
+
+                      <Box sx={{ mb: 2 }}>
+                        {Object.entries(generatedProta.data.document_structure.identitas_dokumen || {}).map(([key, val]) => (
+                          <Typography key={key} variant="body2">
+                            <strong>{key.replace(/_/g, ' ')}:</strong> {val}
+                          </Typography>
+                        ))}
+                      </Box>
+
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="h6" fontWeight={600}>Capaian Pembelajaran Umum</Typography>
+                        <Typography variant="body2">
+                          {generatedProta.data.document_structure.capaian_pembelajaran_umum}
+                        </Typography>
+                      </Box>
+
+                      {Array.isArray(generatedProta.data.document_structure.elemen_capaian_pembelajaran) && (
+                        <Box>
+                          <Typography variant="h6" fontWeight={600} gutterBottom>
+                            Elemen Capaian Pembelajaran
+                          </Typography>
+                          {generatedProta.data.document_structure.elemen_capaian_pembelajaran.map((elemen, idx) => {
+                            const deskripsi = Object.entries(elemen).find(([k, v]) => k.startsWith('deskripsi_fase') && v);
+                            return (
+                              <Box key={idx} sx={{ mb: 1 }}>
+                                <Typography variant="subtitle1" fontWeight={600}>
+                                  {elemen.elemen}
+                                </Typography>
+                                <Typography variant="body2">
+                                  {deskripsi ? deskripsi[1] : ''}
+                                </Typography>
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      )}
+                    </Box>
+                  )}
+
+                  {/* Tabel Prota */}
                   <TableContainer component={Paper} variant="outlined">
                     <Table>
                       <TableHead sx={{ backgroundColor: theme.palette.action.hover }}>
@@ -303,7 +349,6 @@ const GeneratorWizardPage = () => {
                         {itemsToRender.map((item, index) => (
                           <TableRow key={index}>
                             {Object.values(item).map((value, valueIndex) => (
-                              // --- PERBAIKAN: Menghilangkan 'null' dari tampilan ---
                               <TableCell key={valueIndex}>
                                 {value !== null ? String(value) : ''}
                               </TableCell>
@@ -314,7 +359,6 @@ const GeneratorWizardPage = () => {
                     </Table>
                   </TableContainer>
 
-                  {/* --- BAGIAN BARU: Tombol-tombol download --- */}
                   <Divider sx={{ my: 3 }} />
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
                     <Button variant="outlined" onClick={handleDownloadDocx}>
@@ -324,8 +368,6 @@ const GeneratorWizardPage = () => {
                       Download as .PDF
                     </Button>
                   </Stack>
-                  {/* --- AKHIR BAGIAN BARU --- */}
-
                 </Paper>
               </motion.div>
             )}

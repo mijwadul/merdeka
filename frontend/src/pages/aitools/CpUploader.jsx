@@ -46,7 +46,7 @@ function CpUploader() {
   // Fungsi untuk mengambil daftar subject dari backend
   const fetchSubjects = useCallback(async () => {
     try {
-      const response = await axios.get('/api/subjects', createAuthHeaders());
+      const response = await axios.get('http://localhost:5000/api/subjects', createAuthHeaders());
       setSubjects(response.data);
     } catch (error) {
       console.error("Gagal mengambil daftar subject:", error);

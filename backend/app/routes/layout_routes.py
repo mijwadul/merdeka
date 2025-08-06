@@ -34,7 +34,7 @@ def parse_docx_raw(file_path):
     return raw_structure
 
 # --- STEP 2: ADVANCED AI-BASED AGENT PARSER (Heavily Upgraded) ---
-def parser_agent_analyze_layout(raw_structure, document_type):
+def parser_agent_analyze_layout(raw_structure, document_type, jenjang=None, mapel=None):
     """
     Uses Gemini to perform a deep, component-based analysis of an educational document.
     """
@@ -45,88 +45,67 @@ def parser_agent_analyze_layout(raw_structure, document_type):
 
     prompt = f"""
 Anda adalah AI ahli dalam dekonstruksi dan analisis dokumen kurikulum pendidikan di Indonesia.
-Tugas Anda adalah menganalisis struktur JSON mentah dari sebuah dokumen (`{document_type}`) dan mengubahnya menjadi sebuah template komponen JSON yang terstruktur dan cerdas. Jangan hanya mencari satu tabel; dekonstruksi seluruh dokumen menjadi komponen-komponen pedagogisnya.
+Tugas Anda adalah menganalisis struktur JSON mentah dari sebuah dokumen (`{document_type}`) 
+dan mengubahnya menjadi sebuah template komponen JSON yang terstruktur dan cerdas.
 
 # INPUT (Struktur Dokumen Mentah):
 {json.dumps(raw_structure, indent=2)}
 
 # KONTEKS:
+- Jenjang Pendidikan: {jenjang}
+- Mata Pelajaran: {mapel}
 - Tipe Dokumen untuk dianalisis: {document_type}
 - Dokumen ini bisa berupa Modul Ajar, ATP (Alur Tujuan Pembelajaran), Prota (Program Tahunan), atau Promes (Program Semester).
 
 # PERINTAH UTAMA:
-Analisis input secara mendalam dan ekstrak komponen-komponen berikut. Jika sebuah komponen tidak ada, abaikan dari output. Hasilkan sebuah objek JSON tunggal dan valid sebagai output akhir.
+1. Analisis struktur input secara mendalam.
+2. Hasilkan sebuah objek JSON tunggal dan valid sebagai output akhir.
+3. **Tambahkan metadata** berikut ke JSON agar dapat disimpan di database:
+   {{
+     "jenjang": "{jenjang}",
+     "mapel": "{mapel}",
+     "tipe_dokumen": "{document_type}"
+   }}
 
-# STRUKTUR KOMPONEN UNTUK DIEKSTRAK:
-
-1.  **`metadata`**: Identifikasi informasi umum.
-    - Cari: "Satuan Pendidikan", "Mata Pelajaran", "Fase / Kelas", "Penyusun", "Alokasi Waktu", dll.
-    - Output: Objek key-value. `{{ "satuan_pendidikan": "...", "fase_kelas": "...", ... }}`
-
-2.  **`main_structure`**: Komponen inti dokumen.
-    - **Jika `Modul Ajar`**: Ini BUKAN tabel. Ini adalah serangkaian bagian. Identifikasi dan ekstrak:
-        - `tujuan_pembelajaran`: Teks tujuan pembelajaran.
-        - `pemahaman_bermakna`: Teks pemahaman bermakna.
-        - `pertanyaan_pemantik`: Daftar pertanyaan pemantik.
-        - `langkah_kegiatan`: Objek yang berisi `pendahuluan`, `inti`, dan `penutup`, lengkap dengan alokasi waktunya jika ada.
-        - `materi_ajar`: Ringkasan atau daftar materi ajar.
-    - **Jika `ATP`, `Prota`, atau `Promes`**: Ini kemungkinan besar adalah sebuah tabel utama.
-        - `table_headers`: Sebuah objek yang memetakan key `snake_case` ke nama kolom asli. `{{ "no_atp": "NO. ATP", "tujuan_pembelajaran": "ATP", "alokasi_waktu_jp": "JP" }}`.
-        - `placeholder_name`: Sebuah nama placeholder unik untuk daftar utama, cth: `DAFTAR_ATP`.
-
-3.  **`assessment`**: Analisis bagian Asesmen atau Penilaian.
-    - Identifikasi jenis-jenis asesmen yang disebutkan (Sikap, Pengetahuan, Keterampilan, Formatif, Sumatif).
-    - Ekstrak deskripsi singkat atau contoh untuk setiap jenis asesmen.
-    - Output: Objek yang berisi jenis asesmen sebagai key. `{{ "pengetahuan": {{ "teknik": "Tes Tulis", "contoh": "Jelaskan cara..." }}, "keterampilan": {{...}} }}`.
-
-4.  **`supporting_elements`**: Ekstrak komponen pendukung.
-    - `sumber_belajar_media`: Daftar sumber belajar, media, atau alat dan bahan.
-    - `glosarium`: Daftar istilah dan definisinya.
-    - `referensi`: Daftar referensi atau buku yang digunakan.
-
-5.  **`language_style_analysis`**: Lakukan analisis gaya bahasa dari keseluruhan dokumen.
-    - `tone`: Nada bahasa (cth: "Formal, instruksional, dan teknis").
-    - `common_phrasing`: Pola kalimat yang berulang (cth: "Peserta didik dapat menunjukkan kemampuan...", "Guru meminta peserta didik untuk...").
-    - `key_terms`: Istilah atau jargon pendidikan yang dominan (cth: "Profil Pelajar Pancasila", "Capaian Pembelajaran", "Regulasi Diri").
-
-# FORMAT OUTPUT JSON FINAL (Contoh untuk Modul Ajar):
+# STRUKTUR JSON YANG DIHARAPKAN:
 {{
-  "document_type": "{document_type}",
-  "components": [
+  "metadata": {{
+    "jenjang": "{jenjang}",
+    "mapel": "{mapel}",
+    "tipe_dokumen": "{document_type}",
+    "info_lain": {{ ... jika ada ... }}
+  }},
+  "document_structure": [
     {{
-      "component_type": "metadata",
-      "data": {{
-        "penyusun": "Nama Guru...",
-        "jenjang_sekolah": "SD",
-        "kelas": "IV",
-        "alokasi_waktu": "3 x 35 Menit"
+      "type": "paragraph",
+      "text_preview": "contoh kalimat awal...",
+      "style": {{
+        "alignment": "justify",
+        "font_size": 12,
+        "font_style": ["bold"],
+        "line_spacing": 1.5,
+        "indentation": "first-line"
       }}
     }},
     {{
-      "component_type": "main_structure",
-      "data": {{
-        "tujuan_pembelajaran": "Peserta didik melalui pembelajaran demonstrasi...",
-        "langkah_kegiatan": {{
-          "pendahuluan": {{ "durasi_menit": 15, "deskripsi": "Guru menyapa dan memberi salam..." }},
-          "inti": {{ "durasi_menit": 75, "deskripsi": "Peserta didik menyimak informasi dan peragaan..." }},
-          "penutup": {{ "durasi_menit": 15, "deskripsi": "Guru dan peserta didik melakukan refleksi..." }}
-        }}
+      "type": "table",
+      "rows": 4,
+      "columns": 3,
+      "header_style": {{
+        "bold": true,
+        "alignment": "center",
+        "background_color": "light_gray"
+      }},
+      "body_style": {{
+        "alignment": "left",
+        "font_size": 11
       }}
-    }},
+    }}
+  ],
+  "headers": [
     {{
-      "component_type": "assessment",
-      "data": {{
-        "sikap": {{ "deskripsi": "Penilaian Pengembangan Karakter (Dimensi Mandiri dan Gotong Royong)..." }},
-        "pengetahuan": {{ "teknik": "Tes Tulis", "deskripsi": "Pilihan Ganda Dan Uraian..." }}
-      }}
-    }},
-    {{
-      "component_type": "language_style_analysis",
-      "data": {{
-        "tone": "Formal dan sangat terstruktur, menggunakan bahasa instruksional yang jelas.",
-        "common_phrasing": "Guru meminta peserta didik untuk...",
-        "key_terms": ["Kebugaran Jasmani", "Profil Pelajar Pancasila", "Asesmen"]
-      }}
+      "text": "Judul Dokumen",
+      "style": {{ "alignment": "center", "font_size": 16, "bold": true }}
     }}
   ]
 }}
@@ -134,15 +113,13 @@ Analisis input secara mendalam dan ekstrak komponen-komponen berikut. Jika sebua
 
     try:
         generation_config = genai.GenerationConfig(response_mime_type="application/json")
-        model = genai.GenerativeModel('gemini-1.5-flash', generation_config=generation_config)
+        model = genai.GenerativeModel('gemini-2.5-flash', generation_config=generation_config)
         response = model.generate_content(prompt)
-        
+
         return json.loads(response.text, strict=False)
 
     except Exception as e:
         print(f"[PARSER_AGENT_ERROR] Failed to analyze layout with AI: {e}")
-        # Optionally log the prompt and raw_structure for debugging
-        # print(f"Failed prompt: {prompt}")
         raise
 
 # --- UPLOAD ROUTE (Unchanged from previous update) ---
@@ -169,7 +146,6 @@ def upload_layout(current_user):
         try:
             raw_layout = parse_docx_raw(file_path)
             smart_template_json = parser_agent_analyze_layout(raw_layout, tipe_dokumen)
-
         except Exception as e:
             if os.path.exists(file_path):
                 os.remove(file_path)
@@ -190,3 +166,93 @@ def upload_layout(current_user):
         }), 201
 
     return jsonify({"msg": "File type not allowed. Only .docx is supported."}), 400
+
+@layout_bp.route('/', methods=['GET'])
+@token_required
+def get_all_layouts(current_user):
+    """Mengambil daftar semua layout yang diunggah oleh pengguna."""
+    layouts = Layout.query.filter_by(uploaded_by=current_user.id).order_by(Layout.created_at.desc()).all()
+    
+    # Membuat daftar hasil untuk ditampilkan
+    result = []
+    for layout in layouts:
+        result.append({
+            'id': layout.id,
+            'jenjang': layout.jenjang,
+            'mapel': layout.mapel,
+            'tipe_dokumen': layout.tipe_dokumen,
+            'file_name': os.path.basename(layout.file_path),
+            'created_at': layout.created_at.isoformat()
+        })
+        
+    return jsonify(result), 200
+
+# (READ) - Mengambil satu layout spesifik berdasarkan ID
+@layout_bp.route('/<int:layout_id>', methods=['GET'])
+@token_required
+def get_layout_by_id(current_user, layout_id):
+    """Mengambil detail satu layout spesifik."""
+    layout = Layout.query.get_or_404(layout_id)
+    
+    # Memastikan pengguna hanya bisa mengakses layout miliknya
+    if layout.uploaded_by != current_user.id:
+        return jsonify({"msg": "Akses ditolak. Anda bukan pemilik layout ini."}), 403
+        
+    return jsonify({
+        'id': layout.id,
+        'jenjang': layout.jenjang,
+        'mapel': layout.mapel,
+        'tipe_dokumen': layout.tipe_dokumen,
+        'layout_json': layout.layout_json, # Mengirimkan JSON hasil analisis AI
+        'file_name': os.path.basename(layout.file_path),
+        'created_at': layout.created_at.isoformat()
+    }), 200
+
+# (UPDATE) - Memperbarui metadata sebuah layout
+@layout_bp.route('/<int:layout_id>', methods=['PUT'])
+@token_required
+def update_layout(current_user, layout_id):
+    """Memperbarui informasi metadata dari sebuah layout."""
+    layout = Layout.query.get_or_404(layout_id)
+    
+    # Memastikan pengguna hanya bisa mengubah layout miliknya
+    if layout.uploaded_by != current_user.id:
+        return jsonify({"msg": "Akses ditolak. Anda bukan pemilik layout ini."}), 403
+        
+    data = request.get_json()
+    if not data:
+        return jsonify({"msg": "Request body tidak boleh kosong."}), 400
+        
+    # Memperbarui data jika ada di request
+    layout.jenjang = data.get('jenjang', layout.jenjang)
+    layout.mapel = data.get('mapel', layout.mapel)
+    layout.tipe_dokumen = data.get('tipe_dokumen', layout.tipe_dokumen)
+    
+    db.session.commit()
+    
+    return jsonify({"msg": f"Layout dengan ID {layout.id} berhasil diperbarui."}), 200
+
+# (DELETE) - Menghapus sebuah layout
+@layout_bp.route('/<int:layout_id>', methods=['DELETE'])
+@token_required
+def delete_layout(current_user, layout_id):
+    """Menghapus sebuah layout dari database dan file dari server."""
+    layout = Layout.query.get_or_404(layout_id)
+    
+    # Memastikan pengguna hanya bisa menghapus layout miliknya
+    if layout.uploaded_by != current_user.id:
+        return jsonify({"msg": "Akses ditolak. Anda bukan pemilik layout ini."}), 403
+
+    # Hapus file fisik dari server untuk menghemat ruang
+    try:
+        if os.path.exists(layout.file_path):
+            os.remove(layout.file_path)
+    except OSError as e:
+        # Jika gagal menghapus file, kirim pesan error tapi tetap lanjutkan proses
+        print(f"Error saat menghapus file {layout.file_path}: {e}")
+
+    # Hapus data dari database
+    db.session.delete(layout)
+    db.session.commit()
+    
+    return jsonify({"msg": f"Layout dengan ID {layout.id} berhasil dihapus."}), 200

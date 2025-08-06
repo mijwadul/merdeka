@@ -24,6 +24,39 @@ def get_current_academic_year():
     else:
         return f"{year-1}/{year}"
 
+# FUNGSI BARU UNTUK MELIHAT RAW JSON DARI AI
+def debug_save_raw_json(raw_json_string, class_obj):
+    """
+    Menyimpan JSON mentah dari AI ke file untuk debugging dan menampilkan path-nya di terminal.
+    """
+    try:
+        # Membuat direktori 'debug_logs' di root folder proyek jika belum ada
+        log_dir = os.path.join(current_app.root_path, '..', 'debug_logs')
+        os.makedirs(log_dir, exist_ok=True)
+
+        # Membuat nama file yang unik berdasarkan waktu, mapel, dan kelas
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        subject_name = class_obj.subject.name.replace(" ", "_")
+        grade = class_obj.grade_level
+        filename = f"raw_prota_{subject_name}_G{grade}_{timestamp}.json"
+        filepath = os.path.join(log_dir, filename)
+
+        # Menyimpan file JSON
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(raw_json_string)
+
+        # Mencetak pesan konfirmasi di terminal backend
+        print("="*80)
+        print(f"✅ [DEBUG] Raw JSON response from AI saved to: {filepath}")
+        print("="*80)
+
+    except Exception as e:
+        # Menangani jika terjadi error saat menyimpan file
+        print("="*80)
+        print(f"❌ [DEBUG_ERROR] Failed to save raw JSON response: {e}")
+        print("="*80)
+
+
 # ============================================================
 # ============  AGENT-AGENT PEMBANTU  ========================
 # ============================================================
@@ -77,57 +110,66 @@ def get_book_topic_json(class_obj):
 
     return book.topic_json
 
-def writer_agent_generate_prota_items(smart_template, cp_data, book_topics, class_obj, user):
+def writer_agent_generate_prota_items(smart_template, cp_data, book_topics, class_obj, current_user):
     google_api_key = os.getenv('GOOGLE_API_KEY')
-    if not google_api_key: raise ValueError("GOOGLE_API_KEY tidak ditemukan di .env")
+    if not google_api_key:
+        raise ValueError("GOOGLE_API_KEY tidak ditemukan di .env")
+    
     genai.configure(api_key=google_api_key)
+
     list_placeholder = smart_template.get('main_list_placeholder', 'DAFTAR_PROTA_UTAMA')
     item_structure = smart_template.get('item_structure', {})
+
+    # Ringkasan layout untuk diberikan ke prompt
     layout_example_text = """
-    Contoh dari file layout yang harus ditiru:
-    - Kolom yang harus dihasilkan: Unit, Alur Tujuan Pembelajaran, Alokasi Waktu, Semester.
-    - Baris pertama sebuah Unit berisi judul Unit dan total Alokasi Waktu untuk unit tersebut (misal: "27 JP").
-    - Baris-baris berikutnya dalam Unit yang sama berisi poin-poin Alur Tujuan Pembelajaran (ATP) yang dinomori. Kolom Alokasi Waktu di baris ini DIBIARKAN KOSONG.
-    - Gaya penulisan ATP harus formal, contoh: '1.1 Peserta didik mampu memahami...', '1.2 Peserta didik mampu mengidentifikasi...'.
-    """
-    prompt = f"""
-Anda adalah AI Asisten Guru yang sangat teliti dan patuh pada instruksi.
-Tugas Anda adalah membuat draf Program Tahunan (Prota) dengan SECARA KETAT MENIRU STRUKTUR, FORMAT, DAN GAYA BAHASA dari contoh layout yang dideskripsikan di bawah. Gunakan data CP dan Buku Ajar hanya sebagai sumber konten.
+Contoh layout Prota:
+1. Pembuka dokumen memuat:
+   - Judul (misal: PROGRAM TAHUNAN KURIKULUM MERDEKA)
+   - Identitas dokumen: mata pelajaran, kelas, fase, tahun ajaran, sekolah
+   - Capaian Pembelajaran Umum dan Elemen CP (dalam heading & paragraf)
 
-# INPUT:
-1.  **CONTOH FILE LAYOUT (MASTER TEMPLATE YANG HARUS DIIKUTI):**
-    {layout_example_text}
-    Struktur kolom JSON yang harus dihasilkan: {json.dumps(list(item_structure.keys()), indent=2)}
-
-2.  **CAPAIAN PEMBELAJARAN (CP) - Sumber Tujuan:**
-    {json.dumps(cp_data, indent=2)}
-
-3.  **DAFTAR ISI BUKU AJAR - Sumber Materi:**
-    {json.dumps(book_topics, indent=2)}
-
-# PERINTAH WAJIB (HARUS DIIKUTI):
-1.  **STRUKTUR TABEL**: Output JSON Anda harus bisa menghasilkan tabel dengan kolom `{', '.join(item_structure.values())}`. Jangan menambah, mengurangi, atau mengubah nama kolom ini.
-2.  **KOLOM 'Unit'**: Untuk setiap topik utama dari buku, buat sebuah baris `Unit` yang deskriptif. Tuliskan nama Unit hanya di baris pertama. Biarkan kolom Unit di baris ATP berikutnya kosong.
-3.  **KOLOM 'Alur Tujuan Pembelajaran' (PALING PENTING)**:
-    - **JANGAN MERANGKUM**.
-    - Untuk setiap `Unit`, Anda **WAJIB** menjabarkannya menjadi beberapa poin `Alur Tujuan Pembelajaran` (ATP) yang bernomor (misal: 1.1, 1.2, 2.1, dst.).
-    - Setiap poin ATP **WAJIB** meniru gaya bahasa formal, yaitu dimulai dengan frasa seperti "**Peserta didik mampu memahami...**", "**Peserta didik mampu menganalisis...**", dll.
-4.  **KOLOM 'Alokasi Waktu'**:
-    - **JANGAN GUNAKAN RENTANG**.
-    - Alokasi waktu adalah **satu angka total** untuk keseluruhan `Unit` dalam satuan JP. 1 JP adalah 35-45 menit, 
-    - dalam satu minggu maksimal 4 jP kalkulasikan agar sesuai dengan jumlah efektif jam pelajaran selama satu tahun.
-    - contoh penulisan 10 JP
-    - Letakkan angka ini **HANYA** di baris pertama dari setiap `Unit` baru. Biarkan kolom alokasi waktu untuk baris-baris ATP di bawahnya **kosong**.
-5.  Pastikan mendistribusikan semua materi ke dalam 2 semester secara rasional.    
-6.  **KONSISTENSI**: Pastikan hasil akhir Anda secara visual dan struktural sangat mirip dengan contoh file layout yang dideskripsikan.
-
-HASILKAN HANYA OBJEK JSON YANG VALID dengan kunci utama "{list_placeholder}" yang berisi sebuah array dari objek-objek.
+2. Tabel Prota:
+   - Kolom: Unit, Alur Tujuan Pembelajaran, Alokasi Waktu, Semester sesuaikan urutan seperti itu.
+   - Tiap Unit punya baris judul + JP + semester
+   - ATP di bawahnya bernomor 1.1, 1.2, dst. dengan format: “Peserta didik mampu...sesuai potensi dan kreativitas yang dimiliki peserta didik” ATP 1.1 dituliskan di samping 1 dan pisahkan dengan baris baru antar nomor ATP.
+   - sesuaikan JP yang rasional untuk KBM selama setahun
+   - Alokasi waktu dikosongkan di baris ATP
 """
+
+    # Prompt yang sudah diringkas
+    prompt = f"""
+Buatkan *Program Tahunan (Prota)* Kurikulum Merdeka dalam format JSON tentang {class_obj.subject.name}, 
+dengan mengikuti struktur dan gaya penulisan sesuai layout berikut:
+
+{layout_example_text}
+
+## 📥 INPUT:
+1. 📚 **Capaian Pembelajaran (CP)**:
+{json.dumps(cp_data, indent=2)}
+
+2. 📖 **Daftar Isi Buku Ajar**:
+{json.dumps(book_topics, indent=2)}
+
+3. 🗂️ **Kolom Tabel**:
+{json.dumps(list(item_structure.keys()), indent=2)}
+
+Hasilkan dua bagian dalam JSON:
+1. "document_structure": untuk judul, identitas, CP umum, dan elemen CP.
+2. "{list_placeholder}": tabel berisi Unit dan ATP dengan format sesuai layout.
+
+Gunakan bahasa formal dan struktur yang konsisten.
+"""
+
     try:
         generation_config = genai.GenerationConfig(response_mime_type="application/json")
-        model = genai.GenerativeModel('gemini-1.5-flash', generation_config=generation_config)
+        model = genai.GenerativeModel('gemini-2.5-flash', generation_config=generation_config)
         response = model.generate_content(prompt)
+        
+        # MEMANGGIL FUNGSI DEBUG UNTUK MENYIMPAN RAW JSON
+        debug_save_raw_json(response.text, class_obj)
+
         return json.loads(response.text, strict=False)
+
     except Exception as e:
         current_app.logger.error(f"[WRITER_AGENT_ERROR] Gagal saat generate Prota: {e}\nResponse Text: {response.text if 'response' in locals() else 'No response'}")
         raise ConnectionError(f"Gagal memproses respons dari API Gemini: {e}")

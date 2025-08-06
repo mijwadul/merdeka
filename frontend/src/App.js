@@ -10,7 +10,8 @@ import CpUploader from './pages/aitools/CpUploader';
 import GeneratorWizardPage from './pages/aitools/GeneratorWizardPage'; 
 import UserManagementPage from './pages/user/UserManagementPage';
 import ProtectedRoute from './components/ProtectedRoute';
-import Layout from './components/Layout';
+import LayoutListPage from './components/ai/LayoutListPage';
+import Layout from './components/Layout'; 
 import SchoolManagementPage from './pages/SchoolManagementPage';
 import ClassManagementPage from './pages/ClassManagementPage';
 import { AnimatePresence } from 'framer-motion';
@@ -34,6 +35,7 @@ function AppRoutes() {
         >
           <Route path="/ai/tools" element={<AITools />} />
           <Route path="/aitools/layout-retriever" element={<LayoutRetrieverPage/>} />
+          <Route path="/layouts" element={<LayoutListPage />} />
           <Route path="/aitools/book-retriever" element={<BookRetrieverPage />} />
           <Route path="/aitools/cp-upload" element={<CpUploader />} />
           <Route path="/aitools/generator-wizard" element={<GeneratorWizardPage />} />

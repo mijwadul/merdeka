@@ -1,3 +1,5 @@
+// frontend/src/components/common/CustomAlert.jsx
+
 import React from 'react';
 import { Alert, AlertTitle, IconButton, Collapse } from '@mui/material';
 import {
