@@ -40,7 +40,8 @@ const LayoutRetrieverPage = () => {
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        const response = await axios.get('/api/subjects', createAuthHeaders());
+        // --- THIS IS THE CORRECTED LINE ---
+        const response = await axios.get('http://localhost:5000/api/subjects', createAuthHeaders());
         setSubjects(response.data);
       } catch (error) {
         console.error("Gagal mengambil daftar subject:", error);
@@ -77,17 +78,17 @@ const LayoutRetrieverPage = () => {
     try {
       let subjectIdToSubmit = mapelId;
       if (isCustomMapel) {
-        const res = await axios.post('/api/subjects', { name: mapelNameToSubmit }, createAuthHeaders());
+        const res = await axios.post('http://localhost:5000/api/subjects', { name: mapelNameToSubmit }, createAuthHeaders());
         subjectIdToSubmit = res.data.id;
       }
 
       const formData = new FormData();
       formData.append('file', file);
       formData.append('jenjang', jenjang);
-      formData.append('mapel', mapelNameToSubmit); // Backend expects mapel name for layout
+      formData.append('mapel', mapelNameToSubmit); 
       formData.append('tipe_dokumen', tipeDokumen);
 
-      const response = await axios.post('/api/layouts/upload', formData, {
+      const response = await axios.post('http://localhost:5000/api/layouts/upload', formData, {
         headers: { ...createAuthHeaders().headers, 'Content-Type': 'multipart/form-data' }
       });
       
@@ -95,7 +96,7 @@ const LayoutRetrieverPage = () => {
       setFile(null); setJenjang(''); setMapelId(''); setCustomMapel(''); setTipeDokumen('');
       if (isCustomMapel) {
         // Refresh subject list
-        const subjectRes = await axios.get('/api/subjects', createAuthHeaders());
+        const subjectRes = await axios.get('http://localhost:5000/api/subjects', createAuthHeaders());
         setSubjects(subjectRes.data);
       }
     } catch (error) {
