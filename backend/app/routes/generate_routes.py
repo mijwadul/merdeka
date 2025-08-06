@@ -117,61 +117,109 @@ def writer_agent_generate_prota_items(smart_template, cp_data, book_topics, clas
     
     genai.configure(api_key=google_api_key)
 
+    # Helper function untuk menentukan Fase dari tingkat kelas
+    def get_fase_from_grade(grade_level):
+        if grade_level in [1, 2]: return 'A'
+        if grade_level in [3, 4]: return 'B'
+        if grade_level in [5, 6]: return 'C'
+        if grade_level in [7, 8, 9]: return 'D'
+        if grade_level == 10: return 'E'
+        if grade_level in [11, 12]: return 'F'
+        return None
+
+    # --- PERBAIKAN UTAMA: Tentukan fase yang benar lalu saring data CP ---
+    correct_fase = get_fase_from_grade(class_obj.grade_level)
+    if not correct_fase:
+        raise ValueError(f"Tingkat kelas {class_obj.grade_level} tidak valid untuk Kurikulum Merdeka.")
+
+    # Saring cp_data yang masuk untuk memastikan hanya data fase yang relevan yang digunakan
+    filtered_cp_data = [cp for cp in cp_data if cp.get('fase') == correct_fase]
+    if not filtered_cp_data:
+        raise FileNotFoundError(f"Data Capaian Pembelajaran (CP) untuk Fase {correct_fase} mata pelajaran ini tidak ditemukan di database.")
+
+    # Ambil variabel lain yang dibutuhkan untuk prompt
     list_placeholder = smart_template.get('main_list_placeholder', 'DAFTAR_PROTA_UTAMA')
-    item_structure = smart_template.get('item_structure', {})
-
-    # Ringkasan layout untuk diberikan ke prompt
-    layout_example_text = """
-Contoh layout Prota:
-1. Pembuka dokumen memuat:
-   - Judul (misal: PROGRAM TAHUNAN KURIKULUM MERDEKA)
-   - Identitas dokumen: mata pelajaran, kelas, fase, tahun ajaran, sekolah
-   - Capaian Pembelajaran Umum dan Elemen CP (dalam heading & paragraf)
-
-2. Tabel Prota:
-   - Kolom: Unit, Alur Tujuan Pembelajaran, Alokasi Waktu, Semester sesuaikan urutan seperti itu.
-   - Tiap Unit punya baris judul + JP + semester
-   - ATP di bawahnya bernomor 1.1, 1.2, dst. dengan format: “Peserta didik mampu...sesuai potensi dan kreativitas yang dimiliki peserta didik” ATP 1.1 dituliskan di samping 1 dan pisahkan dengan baris baru antar nomor ATP.
-   - sesuaikan JP yang rasional untuk KBM selama setahun
-   - Alokasi waktu dikosongkan di baris ATP
-"""
-
-    # Prompt yang sudah diringkas
+    kelas = str(class_obj.grade_level)
+    tahun_ajaran = get_current_academic_year()
+    mapel = class_obj.subject.name
+    
+    # --- Prompt yang disempurnakan untuk memastikan output akurat dan terstruktur ---
     prompt = f"""
-Buatkan *Program Tahunan (Prota)* Kurikulum Merdeka dalam format JSON tentang {class_obj.subject.name}, 
-dengan mengikuti struktur dan gaya penulisan sesuai layout berikut:
+Anda adalah asisten ahli dalam pembuatan dokumen kurikulum pendidikan di Indonesia.
+Tugas Anda adalah membuat Program Tahunan (Prota) Kurikulum Merdeka dalam format JSON yang terstruktur dengan baik dan akurat.
 
-{layout_example_text}
+## ❗️ PERINTAH UTAMA
+Buatkan Prota untuk mata pelajaran **{mapel}**, Kelas **{kelas}**, Fase **{correct_fase}**, untuk Tahun Ajaran **{tahun_ajaran}**.
 
-## 📥 INPUT:
-1. 📚 **Capaian Pembelajaran (CP)**:
-{json.dumps(cp_data, indent=2)}
+## 📥 DATA INPUT
+1.  **Capaian Pembelajaran (CP) untuk Fase {correct_fase}**:
+    {json.dumps(filtered_cp_data, indent=2)}
 
-2. 📖 **Daftar Isi Buku Ajar**:
-{json.dumps(book_topics, indent=2)}
+2.  **Daftar Isi Buku Ajar (Referensi Materi)**:
+    {json.dumps(book_topics, indent=2)}
 
-3. 🗂️ **Kolom Tabel**:
-{json.dumps(list(item_structure.keys()), indent=2)}
+## 📝 STRUKTUR OUTPUT JSON YANG DIINGINKAN
+Hasilkan JSON dengan DUA kunci utama: "document_structure" dan "{list_placeholder}".
 
-Hasilkan dua bagian dalam JSON:
-1. "document_structure": untuk judul, identitas, CP umum, dan elemen CP.
-2. "{list_placeholder}": tabel berisi Unit dan ATP dengan format sesuai layout.
+1.  **`document_structure`**: Harus berisi metadata dokumen.
+    - `Judul`: "PROGRAM TAHUNAN KURIKULUM MERDEKA"
+    - `Identitas Dokumen`: Sebuah objek berisi:
+        - `Mata Pelajaran`: "{mapel}"
+        - `Kelas`: "{kelas}"
+        - `Fase`: "{correct_fase}"
+        - `Tahun Ajaran`: "{tahun_ajaran}"
+        - `Sekolah`: "[Nama Sekolah Anda]"
+    - `Capaian Pembelajaran Umum`: Paragraf ringkasan capaian fase dari data CP yang diberikan.
+    - `Elemen Capaian Pembelajaran`: Array objek, masing-masing berisi `Elemen` dan `Deskripsi`.
 
-Gunakan bahasa formal dan struktur yang konsisten.
+2.  **`{list_placeholder}`**: Harus berupa **Array of Objects**, di mana SETIAP objek mewakili SATU unit pembelajaran.
+    - **Struktur setiap objek dalam array WAJIB mengikuti format ini**:
+        - `Unit` (string): Judul unit (misal: "Unit 1: Permainan Bola Besar").
+        - `Alur Tujuan Pembelajaran` (string): Daftar ATP untuk unit tersebut, dipisahkan oleh newline (\\n). Setiap ATP harus diawali nomor (misal: "1.1 ...\\n1.2 ...").
+        - `Alokasi Waktu` (string): Total alokasi Jam Pelajaran untuk unit itu (misal: "12 JP").
+        - `Semester` (string): "Ganjil" atau "Genap".
+    
+    - **CONTOH STRUKTUR `{list_placeholder}` YANG BENAR**:
+      ```json
+      [
+        {{
+          "Unit": "Unit 1: Aktivitas Permainan Bola Besar",
+          "Alur Tujuan Pembelajaran": "1.1 Peserta didik mampu menirukan pola gerak dasar lokomotor...\\n1.2 Peserta didik mampu menirukan pola gerak dasar non-lokomotor...",
+          "Alokasi Waktu": "12 JP",
+          "Semester": "Ganjil"
+        }},
+        {{
+          "Unit": "Unit 2: Aktivitas Permainan Bola Kecil",
+          "Alur Tujuan Pembelajaran": "2.1 Peserta didik mampu menirukan pola gerak dasar melempar...",
+          "Alokasi Waktu": "12 JP",
+          "Semester": "Ganjil"
+        }}
+      ]
+      ```
+
+## ⚠️ ATURAN KETAT
+- **KONSISTENSI DATA**: Pastikan `Kelas`, `Fase`, dan `Tahun Ajaran` di dalam output JSON **sesuai persis** dengan yang saya perintahkan di bagian PERINTAH UTAMA.
+- **STRUKTUR TABEL**: **JANGAN** membuat baris terpisah untuk judul Unit dan ATP-nya. Gabungkan semua informasi tersebut ke dalam satu objek JSON per unit, sesuai contoh. Kegagalan mengikuti struktur ini akan membuat output tidak valid.
+- **BAHASA**: Gunakan bahasa Indonesia yang formal dan sesuai standar pendidikan.
 """
 
     try:
         generation_config = genai.GenerationConfig(response_mime_type="application/json")
-        model = genai.GenerativeModel('gemini-2.5-flash', generation_config=generation_config)
+        model = genai.GenerativeModel('gemini-1.5-flash', generation_config=generation_config)
+        
+        current_app.logger.info(f"Sending structured prompt to AI for Class {kelas}, Fase {correct_fase}.")
         response = model.generate_content(prompt)
         
-        # MEMANGGIL FUNGSI DEBUG UNTUK MENYIMPAN RAW JSON
         debug_save_raw_json(response.text, class_obj)
 
         return json.loads(response.text, strict=False)
 
     except Exception as e:
-        current_app.logger.error(f"[WRITER_AGENT_ERROR] Gagal saat generate Prota: {e}\nResponse Text: {response.text if 'response' in locals() else 'No response'}")
+        response_text_on_error = "No response"
+        if 'response' in locals() and hasattr(response, 'text'):
+            response_text_on_error = response.text
+        
+        current_app.logger.error(f"[WRITER_AGENT_ERROR] Gagal saat generate Prota: {e}\nResponse Text: {response_text_on_error}")
         raise ConnectionError(f"Gagal memproses respons dari API Gemini: {e}")
 
 # ============================================================

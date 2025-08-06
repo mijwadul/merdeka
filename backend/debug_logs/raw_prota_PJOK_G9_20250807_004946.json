@@ -1,0 +1,156 @@
+{
+  "document_structure": {
+    "title": "PROGRAM TAHUNAN KURIKULUM MERDEKA",
+    "identity": {
+      "mata_pelajaran": "Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)",
+      "kelas": "X",
+      "fase": "E",
+      "tahun_ajaran": "2024/2025",
+      "sekolah": "SMA Negeri 1 Contoh"
+    },
+    "capaian_pembelajaran_umum": {
+      "heading": "Capaian Pembelajaran PJOK Umum Fase E",
+      "paragraph": "Pada akhir Fase E, peserta didik dapat menerapkan berbagai keterampilan gerak spesifik permainan dan olahraga, senam, gerak berirama, serta olahraga air secara matang dalam berbagai situasi nyata. Mereka mampu mengevaluasi fakta, konsep, prinsip, dan prosedur keterampilan gerak dalam kehidupan sehari-hari, serta mengevaluasi dan melaksanakan program kebugaran jasmani (health-related dan skill-related) berdasarkan prinsip FITT. Peserta didik juga mampu menerapkan pergaulan sehat antar remaja, mengembangkan tanggung jawab sosial dalam kelompok kecil, menunjukkan etika dan saling menghormati, serta menghadapi berbagai tantangan dalam aktivitas jasmani."
+    },
+    "elemen_cp": [
+      {
+        "heading": "Keterampilan Gerak",
+        "paragraph": "Peserta didik mempraktikkan penerapan keterampilan gerak (permainan/olahraga, senam, gerak berirama, olahraga air) secara matang pada situasi riil."
+      },
+      {
+        "heading": "Pengetahuan Gerak",
+        "paragraph": "Peserta didik mengevaluasi fakta, konsep, prinsip, dan prosedur dalam keterampilan gerak pada kehidupan nyata."
+      },
+      {
+        "heading": "Pemanfaatan Gerak",
+        "paragraph": "Peserta didik mengevaluasi & melaksanakan latihan kebugaran jasmani (health-related, skill-related) berdasarkan prinsip FITT; menerapkan pergaulan sehat antar remaja."
+      },
+      {
+        "heading": "Pengembangan Karakter & Nilai-nilai Gerak",
+        "paragraph": "Peserta didik mengembangkan tanggung jawab sosial dalam kelompok kecil; menunjukkan etika, saling menghormati; menghadapi tantangan dalam aktivitas jasmani."
+      }
+    ]
+  },
+  "DAFTAR_PROTA_UTAMA": [
+    {
+      "Unit": "Unit 1: Aktivitas Permainan Bola Besar",
+      "Alur Tujuan Pembelajaran": "",
+      "Alokasi Waktu": "20 JP",
+      "Semester": "1"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "1.1 Peserta didik mampu mempraktikkan keterampilan gerak spesifik (passing, dribbling, shooting) dalam permainan sepak bola sesuai potensi dan kreativitas yang dimiliki peserta didik.\n1.2 Peserta didik mampu mengevaluasi prosedur dan strategi dasar dalam permainan sepak bola sesuai potensi dan kreativitas yang dimiliki peserta didik.\n1.3 Peserta didik mampu menunjukkan kerjasama dan tanggung jawab sosial saat bermain sepak bola sesuai potensi dan kreativitas yang dimiliki peserta didik.\n1.4 Peserta didik mampu mempraktikkan keterampilan gerak spesifik (servis, passing atas, passing bawah, smash, block) dalam permainan bola voli sesuai potensi dan kreativitas yang dimiliki peserta didik.\n1.5 Peserta didik mampu mengevaluasi konsep dan prinsip dasar permainan bola voli sesuai potensi dan kreativitas yang dimiliki peserta didik.\n1.6 Peserta didik mampu menghargai orang lain dan menjaga etika dalam permainan bola voli sesuai potensi dan kreativitas yang dimiliki peserta didik.\n1.7 Peserta didik mampu mempraktikkan keterampilan gerak spesifik (passing, dribbling, shooting) dalam permainan bola basket sesuai potensi dan kreativitas yang dimiliki peserta didik.\n1.8 Peserta didik mampu menganalisis fakta dan prosedur teknik dasar bola basket sesuai potensi dan kreativitas yang dimiliki peserta didik.\n1.9 Peserta didik mampu mengembangkan sikap sportivitas dan kerjasama dalam permainan bola basket sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Unit 2: Aktivitas Permainan Bola Kecil",
+      "Alur Tujuan Pembelajaran": "",
+      "Alokasi Waktu": "18 JP",
+      "Semester": "1"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "2.1 Peserta didik mampu mempraktikkan keterampilan gerak spesifik (memukul, melempar, menangkap, berlari) dalam permainan rounders sesuai potensi dan kreativitas yang dimiliki peserta didik.\n2.2 Peserta didik mampu mengevaluasi konsep dan prinsip dasar permainan rounders sesuai potensi dan kreativitas yang dimiliki peserta didik.\n2.3 Peserta didik mampu mengembangkan sikap tanggung jawab dan saling menghormati dalam permainan rounders sesuai potensi dan kreativitas yang dimiliki peserta didik.\n2.4 Peserta didik mampu mempraktikkan keterampilan gerak spesifik (servis, forehand, backhand, smash) dalam permainan bulu tangkis sesuai potensi dan kreativitas yang dimiliki peserta didik.\n2.5 Peserta didik mampu menganalisis prosedur teknik dasar bulu tangkis sesuai potensi dan kreativitas yang dimiliki peserta didik.\n2.6 Peserta didik mampu menunjukkan etika dan tanggung jawab saat bermain bulu tangkis sesuai potensi dan kreativitas yang dimiliki peserta didik.\n2.7 Peserta didik mampu mempraktikkan keterampilan gerak spesifik (servis, forehand, backhand, smash) dalam permainan tenis meja sesuai potensi dan kreativitas yang dimiliki peserta didik.\n2.8 Peserta didik mampu mengevaluasi fakta dan prinsip teknik dasar tenis meja sesuai potensi dan kreativitas yang dimiliki peserta didik.\n2.9 Peserta didik mampu menunjukkan sikap menghargai dan kerjasama dalam permainan tenis meja sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Unit 3: Aktivitas Atletik",
+      "Alur Tujuan Pembelajaran": "",
+      "Alokasi Waktu": "20 JP",
+      "Semester": "1"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "3.1 Peserta didik mampu mempraktikkan keterampilan gerak spesifik jalan cepat (start, langkah, akhiran) sesuai potensi dan kreativitas yang dimiliki peserta didik.\n3.2 Peserta didik mampu mengevaluasi prosedur dan prinsip dasar jalan cepat sesuai potensi dan kreativitas yang dimiliki peserta didik.\n3.3 Peserta didik mampu menunjukkan disiplin dan tanggung jawab dalam aktivitas jalan cepat sesuai potensi dan kreativitas yang dimiliki peserta didik.\n3.4 Peserta didik mampu mempraktikkan keterampilan gerak spesifik lari estafet (start, perpindahan tongkat, finish) sesuai potensi dan kreativitas yang dimiliki peserta didik.\n3.5 Peserta didik mampu menganalisis fakta dan strategi lari estafet sesuai potensi dan kreativitas yang dimiliki peserta didik.\n3.6 Peserta didik mampu mengembangkan kerjasama dan etika dalam lari estafet sesuai potensi dan kreativitas yang dimiliki peserta didik.\n3.7 Peserta didik mampu mempraktikkan keterampilan gerak spesifik lompat jauh (awalan, tolakan, melayang, mendarat) sesuai potensi dan kreativitas yang dimiliki peserta didik.\n3.8 Peserta didik mampu mengevaluasi konsep dan prosedur lompat jauh sesuai potensi dan kreativitas yang dimiliki peserta didik.\n3.9 Peserta didik mampu menunjukkan sikap sportivitas dan fokus dalam lompat jauh sesuai potensi dan kreativitas yang dimiliki peserta didik.\n3.10 Peserta didik mampu mempraktikkan keterampilan gerak spesifik lempar cakram (pegangan, awalan, putaran, lepasan) sesuai potensi dan kreativitas yang dimiliki peserta didik.\n3.11 Peserta didik mampu menganalisis prinsip-prinsip biomekanika dalam lempar cakram sesuai potensi dan kreativitas yang dimiliki peserta didik.\n3.12 Peserta didik mampu mengembangkan tanggung jawab terhadap keamanan dan keselamatan dalam lempar cakram sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Unit 4: Aktivitas Bela Diri",
+      "Alur Tujuan Pembelajaran": "",
+      "Alokasi Waktu": "12 JP",
+      "Semester": "1"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "4.1 Peserta didik mampu mempraktikkan gerak spesifik dasar (kuda-kuda, pukulan, tendangan, tangkisan) dalam pencak silat sesuai potensi dan kreativitas yang dimiliki peserta didik.\n4.2 Peserta didik mampu mengevaluasi konsep dan prosedur gerak dasar pencak silat sesuai potensi dan kreativitas yang dimiliki peserta didik.\n4.3 Peserta didik mampu mengembangkan sikap disiplin, percaya diri, dan bertanggung jawab dalam berlatih pencak silat sesuai potensi dan kreativitas yang dimiliki peserta didik.\n4.4 Peserta didik mampu memahami nilai-nilai luhur (etika, moral, spiritual) dalam seni bela diri pencak silat sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Unit 5: Aktivitas Kebugaran Jasmani",
+      "Alur Tujuan Pembelajaran": "",
+      "Alokasi Waktu": "18 JP",
+      "Semester": "2"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "5.1 Peserta didik mampu mengevaluasi dan merencanakan latihan kebugaran jasmani terkait kesehatan (daya tahan, kekuatan, kelenturan, komposisi tubuh) berdasarkan prinsip FITT sesuai potensi dan kreativitas yang dimiliki peserta didik.\n5.2 Peserta didik mampu melaksanakan program latihan kebugaran jasmani (health-related) secara mandiri sesuai potensi dan kreativitas yang dimiliki peserta didik.\n5.3 Peserta didik mampu mengevaluasi dan merencanakan latihan kebugaran jasmani terkait keterampilan (kecepatan, kelincahan, daya ledak, koordinasi, keseimbangan) berdasarkan prinsip FITT sesuai potensi dan kreativitas yang dimiliki peserta didik.\n5.4 Peserta didik mampu melaksanakan program latihan kebugaran jasmani (skill-related) secara mandiri sesuai potensi dan kreativitas yang dimiliki peserta didik.\n5.5 Peserta didik mampu menerapkan pola hidup sehat, termasuk istirahat cukup dan gizi seimbang, untuk menjaga kebugaran jasmani sesuai potensi dan kreativitas yang dimiliki peserta didik.\n5.6 Peserta didik mampu menunjukkan tanggung jawab pribadi dalam menjaga kebugaran jasmani dan kesehatan sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Unit 6: Aktivitas Senam",
+      "Alur Tujuan Pembelajaran": "",
+      "Alokasi Waktu": "10 JP",
+      "Semester": "2"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "6.1 Peserta didik mampu mempraktikkan keterampilan gerak dasar senam lantai (misalnya, roll depan, roll belakang, sikap lilin) sesuai potensi dan kreativitas yang dimiliki peserta didik.\n6.2 Peserta didik mampu mengevaluasi konsep dan prosedur gerakan senam lantai sesuai potensi dan kreativitas yang dimiliki peserta didik.\n6.3 Peserta didik mampu menunjukkan keberanian dan tanggung jawab terhadap keselamatan diri serta orang lain dalam aktivitas senam lantai sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Unit 7: Aktivitas Gerak Berirama",
+      "Alur Tujuan Pembelajaran": "",
+      "Alokasi Waktu": "10 JP",
+      "Semester": "2"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "7.1 Peserta didik mampu mempraktikkan rangkaian gerak dasar senam aerobik sesuai irama musik sesuai potensi dan kreativitas yang dimiliki peserta didik.\n7.2 Peserta didik mampu mengevaluasi konsep dan prosedur gerak berirama (senam aerobik) sesuai potensi dan kreativitas yang dimiliki peserta didik.\n7.3 Peserta didik mampu menunjukkan ekspresi dan kreativitas dalam gerak berirama serta menghargai karya orang lain sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Unit 8: Aktivitas Air",
+      "Alur Tujuan Pembelajaran": "",
+      "Alokasi Waktu": "12 JP",
+      "Semester": "2"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "8.1 Peserta didik mampu mempraktikkan keterampilan dasar renang gaya bebas (posisi tubuh, gerakan kaki, gerakan tangan, pengambilan napas) sesuai potensi dan kreativitas yang dimiliki peserta didik.\n8.2 Peserta didik mampu mengevaluasi fakta, konsep, dan prosedur renang gaya bebas sesuai potensi dan kreativitas yang dimiliki peserta didik.\n8.3 Peserta didik mampu menerapkan prosedur keselamatan diri dan orang lain dalam aktivitas air sesuai potensi dan kreativitas yang dimiliki peserta didik.\n8.4 Peserta didik mampu menunjukkan tanggung jawab dan kepercayaan diri dalam beraktivitas di air sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Unit 9: Pertolongan Pertama pada Kecelakaan (P3K)",
+      "Alur Tujuan Pembelajaran": "",
+      "Alokasi Waktu": "6 JP",
+      "Semester": "2"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "9.1 Peserta didik mampu memahami dan mengevaluasi prinsip dasar P3K serta jenis-jenis cedera yang umum terjadi dalam aktivitas jasmani sesuai potensi dan kreativitas yang dimiliki peserta didik.\n9.2 Peserta didik mampu menerapkan prosedur dasar pertolongan pertama pada kecelakaan (misalnya, luka ringan, memar, kram) sesuai potensi dan kreativitas yang dimiliki peserta didik.\n9.3 Peserta didik mampu menunjukkan sikap peduli dan bertanggung jawab dalam memberikan pertolongan pertama sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Unit 10: Aktivitas Fisik dalam Pencegahan Penyakit",
+      "Alur Tujuan Pembelajaran": "",
+      "Alokasi Waktu": "6 JP",
+      "Semester": "2"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "10.1 Peserta didik mampu mengevaluasi hakikat aktivitas fisik dan perannya dalam pencegahan penyakit tidak menular (misalnya, obesitas, diabetes, penyakit jantung) sesuai potensi dan kreativitas yang dimiliki peserta didik.\n10.2 Peserta didik mampu merancang dan menerapkan pola aktivitas fisik yang teratur untuk meningkatkan kesehatan dan mencegah penyakit sesuai potensi dan kreativitas yang dimiliki peserta didik.\n10.3 Peserta didik mampu menerapkan pergaulan sehat antar remaja sebagai bagian dari pola hidup sehat sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    }
+  ]
+}

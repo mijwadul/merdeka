@@ -145,26 +145,35 @@ const GeneratorWizardPage = () => {
       processStream();
     } catch (error) {
       console.error("Streaming SSE gagal:", error);
-      setAlertInfo({ show: true, type: 'error', title: 'Error', message: 'Gagal terhubung ke server.' });
+      if (error.name !== 'AbortError') {
+        setAlertInfo({ show: true, type: 'error', title: 'Error', message: 'Gagal terhubung ke server.' });
+      }
       setIsGenerating(false);
     }
   };
 
+  // ✅ PERBAIKAN: Logika untuk mengekstrak data dan header tabel
   let itemsToRender = [];
   let tableHeaders = [];
+  let docStructure = null;
 
   if (generatedProta && generatedProta.data) {
     const data = generatedProta.data;
+    docStructure = data.document_structure; // Ekstrak struktur dokumen
+    
+    // Cari array utama dalam data (misalnya, DAFTAR_PROTA_UTAMA)
     const firstArrayKey = Object.keys(data).find(key => Array.isArray(data[key]));
     if (firstArrayKey) {
       itemsToRender = data[firstArrayKey];
       if (itemsToRender.length > 0) {
-        tableHeaders = Object.keys(itemsToRender[0]);
+        // Definisikan header secara eksplisit untuk memastikan urutan dan kelengkapan kolom
+        tableHeaders = ["Unit", "Alur Tujuan Pembelajaran", "Alokasi Waktu", "Semester"];
       }
     }
   }
 
   const handleDownloadDocx = () => {
+    // Implementasi download DOCX tidak diubah, seharusnya sudah berfungsi dengan header yang benar
     if (itemsToRender.length === 0) return;
 
     const headerRow = new DocxTableRow({
@@ -175,7 +184,7 @@ const GeneratorWizardPage = () => {
 
     const dataRows = itemsToRender.map(item => new DocxTableRow({
       children: tableHeaders.map(header => new DocxTableCell({
-        children: [new Paragraph(String(item[header] !== null ? item[header] : ''))],
+        children: [new Paragraph(String(item[header] !== null && item[header] !== undefined ? item[header] : ''))],
       })),
     }));
 
@@ -199,13 +208,14 @@ const GeneratorWizardPage = () => {
   };
 
   const handleDownloadPdf = () => {
+    // Implementasi download PDF tidak diubah, seharusnya sudah berfungsi dengan header yang benar
     if (itemsToRender.length === 0) return;
     const doc = new jsPDF();
 
     doc.text("Hasil Draf Program Tahunan (Prota)", 14, 15);
 
     const head = [tableHeaders.map(h => h.replace(/_/g, ' ').toUpperCase())];
-    const body = itemsToRender.map(item => tableHeaders.map(header => String(item[header] !== null ? item[header] : '')));
+    const body = itemsToRender.map(item => tableHeaders.map(header => String(item[header] !== null && item[header] !== undefined ? item[header] : '')));
 
     autoTable(doc,{
       startY: 20,
@@ -279,7 +289,7 @@ const GeneratorWizardPage = () => {
             </AnimatePresence>
           </Paper>
 
-                    <AnimatePresence>
+          <AnimatePresence>
             {itemsToRender.length > 0 && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <Paper elevation={3} sx={{ p: 3, mt: 2, borderRadius: 3 }}>
@@ -288,52 +298,51 @@ const GeneratorWizardPage = () => {
                     Draf ini sudah tersimpan otomatis di akun Anda. Anda dapat mengekspornya di bawah ini.
                   </Typography>
 
-                  {/* ✅ Tambahan: Document Structure */}
-                  {generatedProta?.data?.document_structure && (
+                  {/* ✅ PERBAIKAN: Rendering Document Structure */}
+                  {docStructure && (
                     <Box sx={{ mb: 4 }}>
                       <Typography variant="h5" fontWeight="bold" gutterBottom>
-                        {generatedProta.data.document_structure.judul || "Program Tahunan"}
+                        {docStructure.Judul || "Program Tahunan"}
                       </Typography>
 
-                      <Box sx={{ mb: 2 }}>
-                        {Object.entries(generatedProta.data.document_structure.identitas_dokumen || {}).map(([key, val]) => (
-                          <Typography key={key} variant="body2">
-                            <strong>{key.replace(/_/g, ' ')}:</strong> {val}
+                      <Box sx={{ mb: 2, p: 2, border: `1px solid ${theme.palette.divider}`, borderRadius: 1 }}>
+                        <Typography variant="subtitle1" fontWeight={600} gutterBottom>Identitas Dokumen</Typography>
+                        {Object.entries(docStructure["Identitas Dokumen"] || {}).map(([key, val]) => (
+                          <Typography key={key} variant="body2" sx={{ display: 'flex' }}>
+                            <Box component="strong" sx={{ minWidth: '120px', mr: 1 }}>{key}</Box>: {val}
                           </Typography>
                         ))}
                       </Box>
 
                       <Box sx={{ mb: 2 }}>
                         <Typography variant="h6" fontWeight={600}>Capaian Pembelajaran Umum</Typography>
-                        <Typography variant="body2">
-                          {generatedProta.data.document_structure.capaian_pembelajaran_umum}
+                        <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
+                          {docStructure["Capaian Pembelajaran Umum"]}
                         </Typography>
                       </Box>
 
-                      {Array.isArray(generatedProta.data.document_structure.elemen_capaian_pembelajaran) && (
+                      {Array.isArray(docStructure["Elemen Capaian Pembelajaran"]) && (
                         <Box>
                           <Typography variant="h6" fontWeight={600} gutterBottom>
                             Elemen Capaian Pembelajaran
                           </Typography>
-                          {generatedProta.data.document_structure.elemen_capaian_pembelajaran.map((elemen, idx) => {
-                            const deskripsi = Object.entries(elemen).find(([k, v]) => k.startsWith('deskripsi_fase') && v);
-                            return (
-                              <Box key={idx} sx={{ mb: 1 }}>
-                                <Typography variant="subtitle1" fontWeight={600}>
-                                  {elemen.elemen}
-                                </Typography>
-                                <Typography variant="body2">
-                                  {deskripsi ? deskripsi[1] : ''}
-                                </Typography>
-                              </Box>
-                            );
-                          })}
+                          {docStructure["Elemen Capaian Pembelajaran"].map((elemen, idx) => (
+                            <Box key={idx} sx={{ mb: 1 }}>
+                              <Typography variant="subtitle1" fontWeight={600}>
+                                {elemen.Elemen}
+                              </Typography>
+                              <Typography variant="body2">
+                                {elemen.Deskripsi}
+                              </Typography>
+                            </Box>
+                          ))}
                         </Box>
                       )}
+                      <Divider sx={{ my: 3 }} />
                     </Box>
                   )}
 
-                  {/* Tabel Prota */}
+                  {/* ✅ PERBAIKAN: Rendering Tabel Prota */}
                   <TableContainer component={Paper} variant="outlined">
                     <Table>
                       <TableHead sx={{ backgroundColor: theme.palette.action.hover }}>
@@ -347,10 +356,17 @@ const GeneratorWizardPage = () => {
                       </TableHead>
                       <TableBody>
                         {itemsToRender.map((item, index) => (
-                          <TableRow key={index}>
-                            {Object.values(item).map((value, valueIndex) => (
-                              <TableCell key={valueIndex}>
-                                {value !== null ? String(value) : ''}
+                          <TableRow key={index} sx={ item.Unit ? { backgroundColor: theme.palette.grey[100] } : {} }>
+                            {tableHeaders.map((header) => (
+                              <TableCell 
+                                key={header} 
+                                sx={{ 
+                                  fontWeight: item.Unit && header === 'Unit' ? 'bold' : 'normal',
+                                  whiteSpace: header === 'Alur Tujuan Pembelajaran' ? 'pre-wrap' : 'normal',
+                                  verticalAlign: 'top'
+                                }}
+                              >
+                                {item[header] !== null && item[header] !== undefined ? String(item[header]) : ''}
                               </TableCell>
                             ))}
                           </TableRow>

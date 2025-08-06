@@ -1,0 +1,142 @@
+{
+  "document_structure": {
+    "Judul": "PROGRAM TAHUNAN KURIKULUM MERDEKA",
+    "Identitas Dokumen": {
+      "Mata Pelajaran": "Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)",
+      "Kelas": "I",
+      "Fase": "A",
+      "Tahun Ajaran": "2024/2025",
+      "Sekolah": "[Nama Sekolah Anda]"
+    },
+    "Capaian Pembelajaran Umum": "Pada akhir Fase A, peserta didik menunjukkan kemampuan dalam menirukan pola gerak dasar (lokomotor, non-lokomotor, dan manipulatif), aktivitas senam dasar, gerak berirama, serta aktivitas permainan/olahraga air (kondisional). Peserta didik juga memahami prosedur yang benar dalam melakukan berbagai keterampilan gerak, mempraktikkan latihan kebugaran jasmani dasar, dan menginternalisasi kebiasaan hidup sehat. Selain itu, mereka mampu menunjukkan sikap bertanggung jawab, menghormati orang lain, dan menikmati keriangan dalam setiap aktivitas jasmani.",
+    "Elemen Capaian Pembelajaran": [
+      {
+        "Elemen": "Keterampilan Gerak",
+        "Deskripsi": "Peserta didik menirukan pola gerak dasar, senam dasar, gerak berirama, dan permainan/olahraga air (kondisional)."
+      },
+      {
+        "Elemen": "Pengetahuan Gerak",
+        "Deskripsi": "Peserta didik memahami prosedur benar dalam melakukan berbagai keterampilan gerak."
+      },
+      {
+        "Elemen": "Pemanfaatan Gerak",
+        "Deskripsi": "Peserta didik mempraktikkan latihan kebugaran jasmani dan kebiasaan hidup sehat (fungsi anggota tubuh, kebersihan diri & lingkungan)."
+      },
+      {
+        "Elemen": "Pengembangan Karakter & Nilai-nilai Gerak",
+        "Deskripsi": "Peserta didik bertanggung jawab dalam menerima instruksi guru; menghormati orang lain; menikmati keriangan aktivitas jasmani."
+      }
+    ]
+  },
+  "DAFTAR_PROTA_UTAMA": [
+    {
+      "Unit": "Unit 1: Aktivitas Permainan Bola Besar",
+      "Alokasi Waktu": "12 JP",
+      "Semester": "Ganjil"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "1.1 Peserta didik mampu menirukan pola gerak dasar lokomotor, non-lokomotor, dan manipulatif dalam permainan sepak bola sesuai potensi dan kreativitas yang dimiliki peserta didik.\n1.2 Peserta didik mampu menirukan pola gerak dasar lokomotor, non-lokomotor, dan manipulatif dalam permainan bola voli sesuai potensi dan kreativitas yang dimiliki peserta didik.\n1.3 Peserta didik mampu menirukan pola gerak dasar lokomotor, non-lokomotor, dan manipulatif dalam permainan bola basket sesuai potensi dan kreativitas yang dimiliki peserta didik.\n1.4 Peserta didik mampu memahami prosedur dasar gerakan dalam permainan bola besar sesuai potensi dan kreativitas yang dimiliki peserta didik.\n1.5 Peserta didik mampu menunjukkan sikap bertanggung jawab dan menikmati aktivitas permainan bola besar sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Unit 2: Aktivitas Permainan Bola Kecil",
+      "Alokasi Waktu": "12 JP",
+      "Semester": "Ganjil"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "2.1 Peserta didik mampu menirukan pola gerak dasar melempar, menangkap, dan memukul dalam permainan rounders sesuai potensi dan kreativitas yang dimiliki peserta didik.\n2.2 Peserta didik mampu menirukan pola gerak dasar servis dan memukul dalam permainan bulu tangkis sesuai potensi dan kreativitas yang dimiliki peserta didik.\n2.3 Peserta didik mampu menirukan pola gerak dasar memukul dan menangkis dalam permainan tenis meja sesuai potensi dan kreativitas yang dimiliki peserta didik.\n2.4 Peserta didik mampu memahami prosedur dasar gerakan dalam permainan bola kecil sesuai potensi dan kreativitas yang dimiliki peserta didik.\n2.5 Peserta didik mampu menunjukkan sikap menghormati orang lain dan menikmati aktivitas permainan bola kecil sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Unit 3: Aktivitas Atletik",
+      "Alokasi Waktu": "12 JP",
+      "Semester": "Ganjil"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "3.1 Peserta didik mampu menirukan pola gerak dasar jalan cepat sesuai potensi dan kreativitas yang dimiliki peserta didik.\n3.2 Peserta didik mampu menirukan pola gerak dasar lari (termasuk lari sambung/estafet) sesuai potensi dan kreativitas yang dimiliki peserta didik.\n3.3 Peserta didik mampu menirukan pola gerak dasar lompat jauh sesuai potensi dan kreativitas yang dimiliki peserta didik.\n3.4 Peserta didik mampu menirukan pola gerak dasar lempar cakram sesuai potensi dan kreativitas yang dimiliki peserta didik.\n3.5 Peserta didik mampu memahami prosedur dasar gerakan dalam aktivitas atletik sesuai potensi dan kreativitas yang dimiliki peserta didik.\n3.6 Peserta didik mampu menunjukkan sikap bertanggung jawab dan menikmati aktivitas atletik sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Unit 4: Aktivitas Bela Diri (Pencak Silat)",
+      "Alokasi Waktu": "8 JP",
+      "Semester": "Ganjil"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "4.1 Peserta didik mampu menirukan pola gerak dasar kuda-kuda, pukulan, dan tendangan dalam pencak silat sesuai potensi dan kreativitas yang dimiliki peserta didik.\n4.2 Peserta didik mampu memahami prosedur dasar gerakan dalam aktivitas bela diri pencak silat sesuai potensi dan kreativitas yang dimiliki peserta didik.\n4.3 Peserta didik mampu menunjukkan sikap bertanggung jawab dalam menerima instruksi guru sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Penilaian Akhir Semester Ganjil",
+      "Alokasi Waktu": "7 JP",
+      "Semester": "Ganjil"
+    },
+    {
+      "Unit": "Unit 5: Aktivitas Kebugaran Jasmani",
+      "Alokasi Waktu": "10 JP",
+      "Semester": "Genap"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "5.1 Peserta didik mampu mempraktikkan latihan kebugaran jasmani dasar (kekuatan, kelenturan, daya tahan) sesuai potensi dan kreativitas yang dimiliki peserta didik.\n5.2 Peserta didik mampu memahami prosedur latihan kebugaran jasmani yang benar sesuai potensi dan kreativitas yang dimiliki peserta didik.\n5.3 Peserta didik mampu menerapkan kebiasaan hidup sehat terkait fungsi anggota tubuh sesuai potensi dan kreativitas yang dimiliki peserta didik.\n5.4 Peserta didik mampu menunjukkan sikap menikmati keriangan dalam aktivitas kebugaran jasmani sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Unit 6: Aktivitas Senam",
+      "Alokasi Waktu": "10 JP",
+      "Semester": "Genap"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "6.1 Peserta didik mampu menirukan pola gerak dasar senam lantai (misalnya, guling depan, sikap lilin) sesuai potensi dan kreativitas yang dimiliki peserta didik.\n6.2 Peserta didik mampu memahami prosedur benar dalam melakukan gerakan senam dasar sesuai potensi dan kreativitas yang dimiliki peserta didik.\n6.3 Peserta didik mampu menunjukkan sikap menghormati orang lain dalam aktivitas senam sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Unit 7: Aktivitas Gerak Berirama",
+      "Alokasi Waktu": "10 JP",
+      "Semester": "Genap"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "7.1 Peserta didik mampu menirukan pola gerak dasar gerak berirama (misalnya, langkah dasar, ayunan lengan) menggunakan senam aerobik sesuai potensi dan kreativitas yang dimiliki peserta didik.\n7.2 Peserta didik mampu memahami prosedur benar dalam melakukan gerak berirama sesuai potensi dan kreativitas yang dimiliki peserta didik.\n7.3 Peserta didik mampu menikmati keriangan aktivitas gerak berirama sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Unit 8: Aktivitas Air (Renang Gaya Bebas)",
+      "Alokasi Waktu": "10 JP",
+      "Semester": "Genap"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "8.1 Peserta didik mampu menirukan pola gerak dasar renang gaya bebas (pengenalan air, meluncur, gerakan kaki, gerakan tangan) sesuai potensi dan kreativitas yang dimiliki peserta didik.\n8.2 Peserta didik mampu memahami prosedur dasar gerakan dalam olahraga air (renang gaya bebas) sesuai potensi dan kreativitas yang dimiliki peserta didik.\n8.3 Peserta didik mampu menunjukkan sikap bertanggung jawab dan menikmati aktivitas olahraga air sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Unit 9: Kesehatan (P3K dan Pencegahan Penyakit)",
+      "Alokasi Waktu": "8 JP",
+      "Semester": "Genap"
+    },
+    {
+      "Unit": "",
+      "Alur Tujuan Pembelajaran": "9.1 Peserta didik mampu memahami prosedur dasar pertolongan pertama pada kecelakaan (P3K) ringan sesuai potensi dan kreativitas yang dimiliki peserta didik.\n9.2 Peserta didik mampu menerapkan kebiasaan hidup sehat terkait kebersihan diri dan lingkungan sesuai potensi dan kreativitas yang dimiliki peserta didik.\n9.3 Peserta didik mampu memahami hakikat aktivitas fisik dalam pencegahan penyakit sesuai potensi dan kreativitas yang dimiliki peserta didik.\n9.4 Peserta didik mampu menunjukkan sikap bertanggung jawab terhadap kesehatan diri dan orang lain sesuai potensi dan kreativitas yang dimiliki peserta didik.",
+      "Alokasi Waktu": "",
+      "Semester": ""
+    },
+    {
+      "Unit": "Penilaian Akhir Semester Genap",
+      "Alokasi Waktu": "3 JP",
+      "Semester": "Genap"
+    }
+  ]
+}
