@@ -7,7 +7,10 @@ from .class_model import Class
 from .subject import Subject
 from .generated_document import GeneratedDocument
 from .pdf_reference import PDFReference
-from .aimodels import Layout, Book, MediaAsset, Prota, Promes, Atp, ModulAjar, Soal
+from .aimodels import (
+    Layout, Book, MediaAsset, Prota, Promes, Atp, ModulAjar, Soal,
+    Elemen, CP
+)
 
 __all__ = [
     'User', 
@@ -17,7 +20,6 @@ __all__ = [
     'Subject', 
     'GeneratedDocument',
     'PDFReference',
-    # Menambahkan model baru ke __all__
     'Layout',
     'Book',
     'MediaAsset',
@@ -25,5 +27,7 @@ __all__ = [
     'Promes',
     'Atp',
     'ModulAjar',
-    'Soal'
+    'Soal',
+    'Elemen',
+    'CP'
 ]

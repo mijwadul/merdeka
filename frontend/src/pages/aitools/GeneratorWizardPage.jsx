@@ -6,10 +6,15 @@ import {
   Box, Typography, Button, Paper, FormControl, InputLabel,
   Select, MenuItem, Stack, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, useTheme,
-  LinearProgress
+  LinearProgress, Divider // Ditambahkan Divider
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import CustomAlert from '../../components/common/CustomAlert';
+import { Document, Packer, Paragraph, Table as DocxTable, TableCell as DocxTableCell, TableRow as DocxTableRow, WidthType } from 'docx';
+import { saveAs } from 'file-saver';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+// --- AKHIR BAGIAN BARU ---
 
 const getAuthToken = () => localStorage.getItem('authToken');
 const createAuthHeaders = () => ({ headers: { 'Authorization': `Bearer ${getAuthToken()}` } });
@@ -49,7 +54,6 @@ const GeneratorWizardPage = () => {
   const [alertInfo, setAlertInfo] = useState({ show: false, type: 'info', message: '' });
   const abortControllerRef = useRef(null);
 
-  // ✅ Fetch daftar kelas
   useEffect(() => {
     const fetchMyClasses = async () => {
       try {
@@ -74,7 +78,6 @@ const GeneratorWizardPage = () => {
     };
   }, []);
 
-  // ✅ Streaming SSE via Fetch agar bisa kirim Authorization Header
   const initiateGenerationAndListen = async () => {
     if (!selectedClass) return;
 
@@ -148,7 +151,6 @@ const GeneratorWizardPage = () => {
     }
   };
 
-  // ✅ Parsing hasil untuk tabel
   let itemsToRender = [];
   let tableHeaders = [];
 
@@ -162,6 +164,61 @@ const GeneratorWizardPage = () => {
       }
     }
   }
+
+  // --- BAGIAN BARU: Fungsi untuk menangani download DOCX ---
+  const handleDownloadDocx = () => {
+    if (itemsToRender.length === 0) return;
+
+    const headerRow = new DocxTableRow({
+      children: tableHeaders.map(header => new DocxTableCell({
+        children: [new Paragraph({ text: header.replace(/_/g, ' ').toUpperCase(), bold: true })],
+      })),
+    });
+
+    const dataRows = itemsToRender.map(item => new DocxTableRow({
+      children: tableHeaders.map(header => new DocxTableCell({
+        children: [new Paragraph(String(item[header] !== null ? item[header] : ''))],
+      })),
+    }));
+
+    const table = new DocxTable({
+      rows: [headerRow, ...dataRows],
+      width: { size: 100, type: WidthType.PERCENTAGE },
+    });
+
+    const doc = new Document({
+      sections: [{
+        children: [
+          new Paragraph({ text: "Hasil Draf Program Tahunan (Prota)", heading: "Heading1" }),
+          table,
+        ],
+      }],
+    });
+
+    Packer.toBlob(doc).then(blob => {
+      saveAs(blob, "Prota_Generated.docx");
+    });
+  };
+
+  // --- BAGIAN BARU: Fungsi untuk menangani download PDF ---
+  const handleDownloadPdf = () => {
+    if (itemsToRender.length === 0) return;
+    const doc = new jsPDF();
+
+    doc.text("Hasil Draf Program Tahunan (Prota)", 14, 15);
+
+    const head = [tableHeaders.map(h => h.replace(/_/g, ' ').toUpperCase())];
+    const body = itemsToRender.map(item => tableHeaders.map(header => String(item[header] !== null ? item[header] : '')));
+
+    autoTable(doc,{
+      startY: 20,
+      head: head,
+      body: body,
+    });
+
+    doc.save("Prota_Generated.pdf");
+  };
+  // --- AKHIR BAGIAN BARU ---
 
   return (
     <motion.div initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition}>
@@ -177,8 +234,7 @@ const GeneratorWizardPage = () => {
               <CustomAlert {...alertInfo} onClose={() => setAlertInfo({ ...alertInfo, show: false })} />
             )}
           </AnimatePresence>
-
-          {/* Langkah 1: Pilih Kelas */}
+          
           <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
             <Typography variant="h6" fontWeight={600} gutterBottom>Langkah 1: Pilih Konteks Kelas</Typography>
             <FormControl fullWidth sx={{ mt: 2 }}>
@@ -198,7 +254,6 @@ const GeneratorWizardPage = () => {
             </FormControl>
           </Paper>
 
-          {/* Langkah 2: Prota */}
           <Paper elevation={2} sx={{ p: 3, borderRadius: 3, opacity: selectedClass ? 1 : 0.5 }}>
             <Typography variant="h6" fontWeight={600} gutterBottom>Langkah 2: Program Tahunan (Prota)</Typography>
             <Box sx={{ mt: 2, textAlign: 'center' }}>
@@ -221,12 +276,18 @@ const GeneratorWizardPage = () => {
             </AnimatePresence>
           </Paper>
 
-          {/* Tabel Hasil */}
           <AnimatePresence>
             {itemsToRender.length > 0 && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <Paper elevation={3} sx={{ p: 3, mt: 2, borderRadius: 3 }}>
                   <Typography variant="h6" gutterBottom>Hasil Draf Prota</Typography>
+                  
+                  {/* --- BAGIAN BARU: Teks informasi simpan otomatis --- */}
+                  <Typography variant="body2" color="text.secondary" sx={{mb: 2}}>
+                    Draf ini sudah tersimpan otomatis di akun Anda. Anda dapat mengekspornya di bawah ini.
+                  </Typography>
+                  {/* --- AKHIR BAGIAN BARU --- */}
+
                   <TableContainer component={Paper} variant="outlined">
                     <Table>
                       <TableHead sx={{ backgroundColor: theme.palette.action.hover }}>
@@ -242,13 +303,29 @@ const GeneratorWizardPage = () => {
                         {itemsToRender.map((item, index) => (
                           <TableRow key={index}>
                             {Object.values(item).map((value, valueIndex) => (
-                              <TableCell key={valueIndex}>{String(value)}</TableCell>
+                              // --- PERBAIKAN: Menghilangkan 'null' dari tampilan ---
+                              <TableCell key={valueIndex}>
+                                {value !== null ? String(value) : ''}
+                              </TableCell>
                             ))}
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   </TableContainer>
+
+                  {/* --- BAGIAN BARU: Tombol-tombol download --- */}
+                  <Divider sx={{ my: 3 }} />
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
+                    <Button variant="outlined" onClick={handleDownloadDocx}>
+                      Download as .DOCX
+                    </Button>
+                    <Button variant="outlined" onClick={handleDownloadPdf}>
+                      Download as .PDF
+                    </Button>
+                  </Stack>
+                  {/* --- AKHIR BAGIAN BARU --- */}
+
                 </Paper>
               </motion.div>
             )}

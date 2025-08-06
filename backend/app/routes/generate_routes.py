@@ -3,7 +3,7 @@
 from flask import Blueprint, request, jsonify, current_app, Response, stream_with_context
 from app.extensions import db
 from app.utils.decorators import token_required
-from app.models import Class, Book, Layout, Prota, User
+from app.models import Class, Book, Layout, Prota, User, Subject, Elemen, CP
 import json
 import os
 import time
@@ -17,11 +17,6 @@ generator_bp = Blueprint('generator_bp', __name__)
 # ============================================================
 
 def get_current_academic_year():
-    """
-    Tahun ajaran otomatis:
-    - Jika bulan >= 7 (Juli–Des) → tahun ini/tahun depan
-    - Jika bulan < 7 (Jan–Jun) → tahun lalu/tahun ini
-    """
     now = datetime.now()
     year = now.year
     if now.month >= 7:
@@ -34,12 +29,8 @@ def get_current_academic_year():
 # ============================================================
 
 def get_prota_layout(class_obj):
-    """
-    Layout Agent: Ambil layout_json untuk Prota berdasarkan jenjang dan mapel.
-    """
     subject_name = class_obj.subject.name
     
-    # Tentukan jenjang dari grade level
     if 1 <= class_obj.grade_level <= 6:
         jenjang = 'SD'
     elif 7 <= class_obj.grade_level <= 9:
@@ -49,7 +40,6 @@ def get_prota_layout(class_obj):
     else:
         raise ValueError("Grade level tidak valid.")
 
-    # Ambil layout terbaru
     layout = Layout.query.filter_by(
         jenjang=jenjang,
         mapel=subject_name,
@@ -64,9 +54,6 @@ def get_prota_layout(class_obj):
     return layout.layout_json
 
 def get_book_topic_json(class_obj):
-    """
-    Content Agent: Ambil topic_json dari buku terbaru sesuai jenjang & mapel.
-    """
     subject_name = class_obj.subject.name
 
     if 1 <= class_obj.grade_level <= 6:
@@ -90,54 +77,59 @@ def get_book_topic_json(class_obj):
 
     return book.topic_json
 
-def writer_agent_generate_prota_items(smart_template, topics, class_obj, user):
-    """
-    Writer Agent: Menggunakan Google Gemini untuk membuat items Prota berbasis template.
-    """
+def writer_agent_generate_prota_items(smart_template, cp_data, book_topics, class_obj, user):
     google_api_key = os.getenv('GOOGLE_API_KEY')
-    if not google_api_key:
-        raise ValueError("GOOGLE_API_KEY tidak ditemukan di file .env")
+    if not google_api_key: raise ValueError("GOOGLE_API_KEY tidak ditemukan di .env")
     genai.configure(api_key=google_api_key)
-
-    list_placeholder = smart_template.get('main_list_placeholder', 'items')
+    list_placeholder = smart_template.get('main_list_placeholder', 'DAFTAR_PROTA_UTAMA')
     item_structure = smart_template.get('item_structure', {})
-
+    layout_example_text = """
+    Contoh dari file layout yang harus ditiru:
+    - Kolom yang harus dihasilkan: Unit, Alur Tujuan Pembelajaran, Alokasi Waktu, Semester.
+    - Baris pertama sebuah Unit berisi judul Unit dan total Alokasi Waktu untuk unit tersebut (misal: "27 JP").
+    - Baris-baris berikutnya dalam Unit yang sama berisi poin-poin Alur Tujuan Pembelajaran (ATP) yang dinomori. Kolom Alokasi Waktu di baris ini DIBIARKAN KOSONG.
+    - Gaya penulisan ATP harus formal, contoh: '1.1 Peserta didik mampu memahami...', '1.2 Peserta didik mampu mengidentifikasi...'.
+    """
     prompt = f"""
-Anda adalah AI ahli kurikulum yang sangat efisien.
-Tugas Anda adalah membuat daftar (list) item untuk sebuah Program Tahunan (Prota) berdasarkan struktur item dan daftar topik yang diberikan.
+Anda adalah AI Asisten Guru yang sangat teliti dan patuh pada instruksi.
+Tugas Anda adalah membuat draf Program Tahunan (Prota) dengan SECARA KETAT MENIRU STRUKTUR, FORMAT, DAN GAYA BAHASA dari contoh layout yang dideskripsikan di bawah. Gunakan data CP dan Buku Ajar hanya sebagai sumber konten.
 
-# KONTEKS
-- Mata Pelajaran: {class_obj.subject.name}
-- Kelas: {class_obj.grade_level}
+# INPUT:
+1.  **CONTOH FILE LAYOUT (MASTER TEMPLATE YANG HARUS DIIKUTI):**
+    {layout_example_text}
+    Struktur kolom JSON yang harus dihasilkan: {json.dumps(list(item_structure.keys()), indent=2)}
 
-# INPUT
-1. DAFTAR TOPIK DARI BUKU:
-{json.dumps(topics, indent=2)}
+2.  **CAPAIAN PEMBELAJARAN (CP) - Sumber Tujuan:**
+    {json.dumps(cp_data, indent=2)}
 
-2. STRUKTUR UNTUK SETIAP ITEM:
-{json.dumps(item_structure, indent=2)}
+3.  **DAFTAR ISI BUKU AJAR - Sumber Materi:**
+    {json.dumps(book_topics, indent=2)}
 
-# PERINTAH
-1. Untuk setiap topik, buat sebuah objek JSON yang mengikuti STRUKTUR UNTUK SETIAP ITEM.
-2. Isi setiap kolom (misalnya "Materi Pokok", "Semester", "Alokasi Waktu") dengan informasi dari topik.
-3. Hasil akhir HARUS berupa objek JSON tunggal dengan satu kunci utama bernama "{list_placeholder}", yang nilainya adalah list semua item.
-4. Jangan berikan teks di luar JSON.
+# PERINTAH WAJIB (HARUS DIIKUTI):
+1.  **STRUKTUR TABEL**: Output JSON Anda harus bisa menghasilkan tabel dengan kolom `{', '.join(item_structure.values())}`. Jangan menambah, mengurangi, atau mengubah nama kolom ini.
+2.  **KOLOM 'Unit'**: Untuk setiap topik utama dari buku, buat sebuah baris `Unit` yang deskriptif. Tuliskan nama Unit hanya di baris pertama. Biarkan kolom Unit di baris ATP berikutnya kosong.
+3.  **KOLOM 'Alur Tujuan Pembelajaran' (PALING PENTING)**:
+    - **JANGAN MERANGKUM**.
+    - Untuk setiap `Unit`, Anda **WAJIB** menjabarkannya menjadi beberapa poin `Alur Tujuan Pembelajaran` (ATP) yang bernomor (misal: 1.1, 1.2, 2.1, dst.).
+    - Setiap poin ATP **WAJIB** meniru gaya bahasa formal, yaitu dimulai dengan frasa seperti "**Peserta didik mampu memahami...**", "**Peserta didik mampu menganalisis...**", dll.
+4.  **KOLOM 'Alokasi Waktu'**:
+    - **JANGAN GUNAKAN RENTANG**.
+    - Alokasi waktu adalah **satu angka total** untuk keseluruhan `Unit` dalam satuan JP. 1 JP adalah 35-45 menit, 
+    - dalam satu minggu maksimal 4 jP kalkulasikan agar sesuai dengan jumlah efektif jam pelajaran selama satu tahun.
+    - contoh penulisan 10 JP
+    - Letakkan angka ini **HANYA** di baris pertama dari setiap `Unit` baru. Biarkan kolom alokasi waktu untuk baris-baris ATP di bawahnya **kosong**.
+5.  Pastikan mendistribusikan semua materi ke dalam 2 semester secara rasional.    
+6.  **KONSISTENSI**: Pastikan hasil akhir Anda secara visual dan struktural sangat mirip dengan contoh file layout yang dideskripsikan.
+
+HASILKAN HANYA OBJEK JSON YANG VALID dengan kunci utama "{list_placeholder}" yang berisi sebuah array dari objek-objek.
 """
-
     try:
-        print("[BACKEND-DEBUG] Mengirim request ke Google Gemini dengan template cerdas...")
         generation_config = genai.GenerationConfig(response_mime_type="application/json")
-        model = genai.GenerativeModel('gemini-2.5-flash', generation_config=generation_config)
-        
+        model = genai.GenerativeModel('gemini-1.5-flash', generation_config=generation_config)
         response = model.generate_content(prompt)
-        print("[BACKEND-DEBUG] Menerima respons dari Google Gemini.")
-
         return json.loads(response.text, strict=False)
-
     except Exception as e:
-        print(f"[WRITER_AGENT_ERROR] Gagal saat generate dengan template cerdas: {e}")
-        if 'response' in locals():
-            print(f"[BACKEND-DEBUG] Teks mentah dari Gemini: {response.text}")
+        current_app.logger.error(f"[WRITER_AGENT_ERROR] Gagal saat generate Prota: {e}\nResponse Text: {response.text if 'response' in locals() else 'No response'}")
         raise ConnectionError(f"Gagal memproses respons dari API Gemini: {e}")
 
 # ============================================================
@@ -147,9 +139,6 @@ Tugas Anda adalah membuat daftar (list) item untuk sebuah Program Tahunan (Prota
 @generator_bp.route('/api/wizard/generate/prota', methods=['POST'])
 @token_required
 def generate_prota_route(current_user):
-    """
-    Endpoint normal (langsung) untuk generate Prota.
-    """
     data = request.get_json()
     class_id = data.get('class_id')
 
@@ -166,15 +155,27 @@ def generate_prota_route(current_user):
     try:
         layout_structure = get_prota_layout(target_class)
         topics = get_book_topic_json(target_class)
+
+        # === PERBAIKAN DI SINI: Membuat dictionary secara manual, bukan memanggil .to_dict() ===
+        cp_objects = CP.query.join(Elemen).filter(Elemen.subject_id == target_class.subject_id).all()
+        cp_data = [{
+            'id': cp.id,
+            'fase': cp.fase,
+            'isi_cp': cp.isi_cp,
+            'elemen': cp.elemen.nama_elemen if cp.elemen else None,
+            'sumber_dokumen': cp.sumber_dokumen
+        } for cp in cp_objects]
+        # =======================================================================================
+
         generated_items_json = writer_agent_generate_prota_items(
-            layout_structure, topics, target_class, current_user
+            layout_structure, cp_data, topics, target_class, current_user
         )
 
         new_prota = Prota(
             user_id=current_user.id,
             mapel=target_class.subject.name,
             jenjang=str(target_class.grade_level),
-            tahun_ajaran=get_current_academic_year(),  # ✅ otomatis
+            tahun_ajaran=get_current_academic_year(),
             items_json=generated_items_json,
             status_validasi='draft'
         )
@@ -204,10 +205,6 @@ def generate_prota_route(current_user):
 @generator_bp.route('/api/wizard/generate/prota/stream', methods=['GET'])
 @token_required
 def generate_prota_stream(current_user):
-    """
-    Endpoint streaming SSE untuk generate Prota dengan progress real-time.
-    """
-
     class_id = request.args.get('class_id', type=int)
     if not class_id:
         return jsonify({"msg": "Class ID wajib diisi."}), 400
@@ -221,44 +218,48 @@ def generate_prota_stream(current_user):
 
     def event_stream():
         try:
-            # 1. Starting
             yield f"data: {json.dumps({'progress': 5, 'status': '🚀 Starting AI Engine...'})}\n\n"
             time.sleep(1)
 
-            # 2. Validasi class
             yield f"data: {json.dumps({'progress': 10, 'status': '🔍 Validating class & permissions'})}\n\n"
             time.sleep(0.5)
 
-            # 3. Ambil layout
             yield f"data: {json.dumps({'progress': 20, 'status': '📂 Fetching Layout Template'})}\n\n"
             layout_structure = get_prota_layout(target_class)
             time.sleep(0.5)
 
-            # 4. Ambil topik buku
             yield f"data: {json.dumps({'progress': 40, 'status': '📖 Loading Book Topics'})}\n\n"
             topics = get_book_topic_json(target_class)
             time.sleep(0.5)
 
-            # 5. Hubungi Gemini
+            # === PERBAIKAN DI SINI JUGA: Membuat dictionary secara manual ===
+            cp_objects = CP.query.join(Elemen).filter(Elemen.subject_id == target_class.subject_id).all()
+            cp_data = [{
+                'id': cp.id,
+                'fase': cp.fase,
+                'isi_cp': cp.isi_cp,
+                'elemen': cp.elemen.nama_elemen if cp.elemen else None,
+                'sumber_dokumen': cp.sumber_dokumen
+            } for cp in cp_objects]
+            # ===============================================================
+
             yield f"data: {json.dumps({'progress': 60, 'status': '🤖 Starting AI Agents'})}\n\n"
             generated_items_json = writer_agent_generate_prota_items(
-                layout_structure, topics, target_class, current_user
+                layout_structure, cp_data, topics, target_class, current_user
             )
 
-            # 6. Simpan DB
             yield f"data: {json.dumps({'progress': 90, 'status': '💾 Finalizing & Saving to Database'})}\n\n"
             new_prota = Prota(
                 user_id=current_user.id,
                 mapel=target_class.subject.name,
                 jenjang=str(target_class.grade_level),
-                tahun_ajaran=get_current_academic_year(),  # ✅ otomatis
+                tahun_ajaran=get_current_academic_year(),
                 items_json=generated_items_json,
                 status_validasi='draft'
             )
             db.session.add(new_prota)
             db.session.commit()
 
-            # 7. Selesai
             yield f"data: {json.dumps({'progress': 100, 'status': '✅ Completed!', 'result': {'msg': 'Prota berhasil dibuat!', 'data': generated_items_json}})}\n\n"
 
         except Exception as e:
