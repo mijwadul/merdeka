@@ -24,38 +24,31 @@ def get_current_academic_year():
     else:
         return f"{year-1}/{year}"
 
-# FUNGSI BARU UNTUK MELIHAT RAW JSON DARI AI
-def debug_save_raw_json(raw_json_string, class_obj):
+def save_ai_generation_to_db(ai_json_output: dict, current_user: User, target_class, db_session):
     """
-    Menyimpan JSON mentah dari AI ke file untuk debugging dan menampilkan path-nya di terminal.
+    Menyimpan hasil generate AI (Prota) ke dalam database secara terpusat.
     """
+    if not ai_json_output:
+        raise ValueError("Input JSON dari AI tidak boleh kosong.")
+
     try:
-        # Membuat direktori 'debug_logs' di root folder proyek jika belum ada
-        log_dir = os.path.join(current_app.root_path, '..', 'debug_logs')
-        os.makedirs(log_dir, exist_ok=True)
-
-        # Membuat nama file yang unik berdasarkan waktu, mapel, dan kelas
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        subject_name = class_obj.subject.name.replace(" ", "_")
-        grade = class_obj.grade_level
-        filename = f"raw_prota_{subject_name}_G{grade}_{timestamp}.json"
-        filepath = os.path.join(log_dir, filename)
-
-        # Menyimpan file JSON
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(raw_json_string)
-
-        # Mencetak pesan konfirmasi di terminal backend
-        print("="*80)
-        print(f"✅ [DEBUG] Raw JSON response from AI saved to: {filepath}")
-        print("="*80)
-
+        tahun_ajaran = get_current_academic_year()
+        new_prota = Prota(
+            user_id=current_user.id,
+            mapel=target_class.subject.name,
+            jenjang=str(target_class.grade_level),
+            tahun_ajaran=tahun_ajaran,
+            items_json=ai_json_output,
+            status_validasi='draft'
+        )
+        db_session.add(new_prota)
+        db_session.commit()
+        current_app.logger.info(f"✅ Prota baru berhasil disimpan dengan ID: {new_prota.id} untuk user {current_user.email}")
+        return new_prota
     except Exception as e:
-        # Menangani jika terjadi error saat menyimpan file
-        print("="*80)
-        print(f"❌ [DEBUG_ERROR] Failed to save raw JSON response: {e}")
-        print("="*80)
-
+        db_session.rollback()
+        current_app.logger.error(f"❌ Gagal menyimpan Prota ke database: {e}")
+        raise e
 
 # ============================================================
 # ============  AGENT-AGENT PEMBANTU  ========================
@@ -117,7 +110,6 @@ def writer_agent_generate_prota_items(smart_template, cp_data, book_topics, clas
     
     genai.configure(api_key=google_api_key)
 
-    # Helper function untuk menentukan Fase dari tingkat kelas
     def get_fase_from_grade(grade_level):
         if grade_level in [1, 2]: return 'A'
         if grade_level in [3, 4]: return 'B'
@@ -127,23 +119,19 @@ def writer_agent_generate_prota_items(smart_template, cp_data, book_topics, clas
         if grade_level in [11, 12]: return 'F'
         return None
 
-    # --- PERBAIKAN UTAMA: Tentukan fase yang benar lalu saring data CP ---
     correct_fase = get_fase_from_grade(class_obj.grade_level)
     if not correct_fase:
         raise ValueError(f"Tingkat kelas {class_obj.grade_level} tidak valid untuk Kurikulum Merdeka.")
 
-    # Saring cp_data yang masuk untuk memastikan hanya data fase yang relevan yang digunakan
     filtered_cp_data = [cp for cp in cp_data if cp.get('fase') == correct_fase]
     if not filtered_cp_data:
         raise FileNotFoundError(f"Data Capaian Pembelajaran (CP) untuk Fase {correct_fase} mata pelajaran ini tidak ditemukan di database.")
 
-    # Ambil variabel lain yang dibutuhkan untuk prompt
     list_placeholder = smart_template.get('main_list_placeholder', 'DAFTAR_PROTA_UTAMA')
     kelas = str(class_obj.grade_level)
     tahun_ajaran = get_current_academic_year()
     mapel = class_obj.subject.name
     
-    # --- Prompt yang disempurnakan untuk memastikan output akurat dan terstruktur ---
     prompt = f"""
 Anda adalah asisten ahli dalam pembuatan dokumen kurikulum pendidikan di Indonesia.
 Tugas Anda adalah membuat Program Tahunan (Prota) Kurikulum Merdeka dalam format JSON yang terstruktur dengan baik dan akurat.
@@ -202,24 +190,16 @@ Hasilkan JSON dengan DUA kunci utama: "document_structure" dan "{list_placeholde
 - **STRUKTUR TABEL**: **JANGAN** membuat baris terpisah untuk judul Unit dan ATP-nya. Gabungkan semua informasi tersebut ke dalam satu objek JSON per unit, sesuai contoh. Kegagalan mengikuti struktur ini akan membuat output tidak valid.
 - **BAHASA**: Gunakan bahasa Indonesia yang formal dan sesuai standar pendidikan.
 """
-
     try:
         generation_config = genai.GenerationConfig(response_mime_type="application/json")
-        model = genai.GenerativeModel('gemini-1.5-flash', generation_config=generation_config)
+        model = genai.GenerativeModel('gemini-2.5-flash', generation_config=generation_config)
         
         current_app.logger.info(f"Sending structured prompt to AI for Class {kelas}, Fase {correct_fase}.")
         response = model.generate_content(prompt)
         
-        debug_save_raw_json(response.text, class_obj)
-
         return json.loads(response.text, strict=False)
-
     except Exception as e:
-        response_text_on_error = "No response"
-        if 'response' in locals() and hasattr(response, 'text'):
-            response_text_on_error = response.text
-        
-        current_app.logger.error(f"[WRITER_AGENT_ERROR] Gagal saat generate Prota: {e}\nResponse Text: {response_text_on_error}")
+        current_app.logger.error(f"[WRITER_AGENT_ERROR] Gagal saat generate Prota: {e}")
         raise ConnectionError(f"Gagal memproses respons dari API Gemini: {e}")
 
 # ============================================================
@@ -245,33 +225,20 @@ def generate_prota_route(current_user):
     try:
         layout_structure = get_prota_layout(target_class)
         topics = get_book_topic_json(target_class)
-
-        # === PERBAIKAN DI SINI: Membuat dictionary secara manual, bukan memanggil .to_dict() ===
         cp_objects = CP.query.join(Elemen).filter(Elemen.subject_id == target_class.subject_id).all()
-        cp_data = [{
-            'id': cp.id,
-            'fase': cp.fase,
-            'isi_cp': cp.isi_cp,
-            'elemen': cp.elemen.nama_elemen if cp.elemen else None,
-            'sumber_dokumen': cp.sumber_dokumen
-        } for cp in cp_objects]
-        # =======================================================================================
+        cp_data = [{'id': cp.id, 'fase': cp.fase, 'isi_cp': cp.isi_cp, 'elemen': cp.elemen.nama_elemen if cp.elemen else None, 'sumber_dokumen': cp.sumber_dokumen} for cp in cp_objects]
 
         generated_items_json = writer_agent_generate_prota_items(
             layout_structure, cp_data, topics, target_class, current_user
         )
 
-        new_prota = Prota(
-            user_id=current_user.id,
-            mapel=target_class.subject.name,
-            jenjang=str(target_class.grade_level),
-            tahun_ajaran=get_current_academic_year(),
-            items_json=generated_items_json,
-            status_validasi='draft'
+        new_prota = save_ai_generation_to_db(
+            ai_json_output=generated_items_json,
+            current_user=current_user,
+            target_class=target_class,
+            db_session=db.session
         )
-        db.session.add(new_prota)
-        db.session.commit()
-
+        
         return jsonify({
             "msg": f"Prota untuk {target_class.subject.name} kelas {target_class.grade_level} berhasil dibuat!",
             "prota_id": new_prota.id,
@@ -322,16 +289,8 @@ def generate_prota_stream(current_user):
             topics = get_book_topic_json(target_class)
             time.sleep(0.5)
 
-            # === PERBAIKAN DI SINI JUGA: Membuat dictionary secara manual ===
             cp_objects = CP.query.join(Elemen).filter(Elemen.subject_id == target_class.subject_id).all()
-            cp_data = [{
-                'id': cp.id,
-                'fase': cp.fase,
-                'isi_cp': cp.isi_cp,
-                'elemen': cp.elemen.nama_elemen if cp.elemen else None,
-                'sumber_dokumen': cp.sumber_dokumen
-            } for cp in cp_objects]
-            # ===============================================================
+            cp_data = [{'id': cp.id, 'fase': cp.fase, 'isi_cp': cp.isi_cp, 'elemen': cp.elemen.nama_elemen if cp.elemen else None, 'sumber_dokumen': cp.sumber_dokumen} for cp in cp_objects]
 
             yield f"data: {json.dumps({'progress': 60, 'status': '🤖 Starting AI Agents'})}\n\n"
             generated_items_json = writer_agent_generate_prota_items(
@@ -339,20 +298,18 @@ def generate_prota_stream(current_user):
             )
 
             yield f"data: {json.dumps({'progress': 90, 'status': '💾 Finalizing & Saving to Database'})}\n\n"
-            new_prota = Prota(
-                user_id=current_user.id,
-                mapel=target_class.subject.name,
-                jenjang=str(target_class.grade_level),
-                tahun_ajaran=get_current_academic_year(),
-                items_json=generated_items_json,
-                status_validasi='draft'
+            
+            save_ai_generation_to_db(
+                ai_json_output=generated_items_json,
+                current_user=current_user,
+                target_class=target_class,
+                db_session=db.session
             )
-            db.session.add(new_prota)
-            db.session.commit()
-
+            
             yield f"data: {json.dumps({'progress': 100, 'status': '✅ Completed!', 'result': {'msg': 'Prota berhasil dibuat!', 'data': generated_items_json}})}\n\n"
 
         except Exception as e:
+            current_app.logger.error(f"Error dalam stream: {str(e)}")
             yield f"data: {json.dumps({'error': True, 'status': str(e), 'progress': 0})}\n\n"
 
     return Response(stream_with_context(event_stream()), mimetype='text/event-stream')

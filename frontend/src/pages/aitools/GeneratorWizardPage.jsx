@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import CustomAlert from '../../components/common/CustomAlert';
-import { Document, Packer, Paragraph, Table as DocxTable, TableCell as DocxTableCell, TableRow as DocxTableRow, WidthType } from 'docx';
+import { Document, Packer, Paragraph, Table as DocxTable, TableCell as DocxTableCell, TableRow as DocxTableRow, WidthType, TextRun, HeadingLevel } from 'docx';
 import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -152,30 +152,68 @@ const GeneratorWizardPage = () => {
     }
   };
 
-  // ✅ PERBAIKAN: Logika untuk mengekstrak data dan header tabel
   let itemsToRender = [];
   let tableHeaders = [];
   let docStructure = null;
 
   if (generatedProta && generatedProta.data) {
     const data = generatedProta.data;
-    docStructure = data.document_structure; // Ekstrak struktur dokumen
+    docStructure = data.document_structure;
     
-    // Cari array utama dalam data (misalnya, DAFTAR_PROTA_UTAMA)
     const firstArrayKey = Object.keys(data).find(key => Array.isArray(data[key]));
     if (firstArrayKey) {
       itemsToRender = data[firstArrayKey];
       if (itemsToRender.length > 0) {
-        // Definisikan header secara eksplisit untuk memastikan urutan dan kelengkapan kolom
         tableHeaders = ["Unit", "Alur Tujuan Pembelajaran", "Alokasi Waktu", "Semester"];
       }
     }
   }
 
+  // ✅ =================================================================
+  // ✅ MODIFICATION 1: UPDATED DOCX DOWNLOAD HANDLER
+  // ✅ =================================================================
   const handleDownloadDocx = () => {
-    // Implementasi download DOCX tidak diubah, seharusnya sudah berfungsi dengan header yang benar
-    if (itemsToRender.length === 0) return;
+    if (!docStructure || itemsToRender.length === 0) return;
 
+    // --- Part 1: Build Document Structure ---
+    const docChildren = [
+      new Paragraph({ text: docStructure.Judul || "Program Tahunan", heading: HeadingLevel.HEADING_1 }),
+      new Paragraph({ text: "" }), // Spacer
+    ];
+
+    if (docStructure["Identitas Dokumen"]) {
+      docChildren.push(new Paragraph({ text: "Identitas Dokumen", heading: HeadingLevel.HEADING_2 }));
+      Object.entries(docStructure["Identitas Dokumen"]).forEach(([key, val]) => {
+        docChildren.push(new Paragraph({
+          children: [
+            new TextRun({ text: `${key.padEnd(20, ' ')}\t: `, bold: true }),
+            new TextRun({ text: String(val) })
+          ],
+        }));
+      });
+      docChildren.push(new Paragraph({ text: "" }));
+    }
+
+    if (docStructure["Capaian Pembelajaran Umum"]) {
+      docChildren.push(new Paragraph({ text: "Capaian Pembelajaran Umum", heading: HeadingLevel.HEADING_2 }));
+      docChildren.push(new Paragraph({ text: docStructure["Capaian Pembelajaran Umum"], style: "WellSpoken" }));
+      docChildren.push(new Paragraph({ text: "" }));
+    }
+    
+    if (Array.isArray(docStructure["Elemen Capaian Pembelajaran"])) {
+        docChildren.push(new Paragraph({ text: "Elemen Capaian Pembelajaran", heading: HeadingLevel.HEADING_2 }));
+        docStructure["Elemen Capaian Pembelajaran"].forEach(elem => {
+            docChildren.push(new Paragraph({
+                children: [new TextRun({ text: elem.Elemen, bold: true })]
+            }));
+            docChildren.push(new Paragraph({
+                children: [new TextRun({ text: elem.Deskripsi })]
+            }));
+             docChildren.push(new Paragraph({ text: "" }));
+        });
+    }
+
+    // --- Part 2: Build Table ---
     const headerRow = new DocxTableRow({
       children: tableHeaders.map(header => new DocxTableCell({
         children: [new Paragraph({ text: header.replace(/_/g, ' ').toUpperCase(), bold: true })],
@@ -192,14 +230,21 @@ const GeneratorWizardPage = () => {
       rows: [headerRow, ...dataRows],
       width: { size: 100, type: WidthType.PERCENTAGE },
     });
+    
+    docChildren.push(table);
 
+    // --- Part 3: Create and Save Document ---
     const doc = new Document({
-      sections: [{
-        children: [
-          new Paragraph({ text: "Hasil Draf Program Tahunan (Prota)", heading: "Heading1" }),
-          table,
-        ],
-      }],
+      sections: [{ children: docChildren }],
+      styles: {
+        paragraphStyles: [{
+          id: "WellSpoken",
+          name: "Well Spoken",
+          basedOn: "Normal",
+          next: "Normal",
+          run: { italics: true, color: "595959" },
+        }],
+      }
     });
 
     Packer.toBlob(doc).then(blob => {
@@ -207,22 +252,88 @@ const GeneratorWizardPage = () => {
     });
   };
 
+  // ✅ =================================================================
+  // ✅ MODIFICATION 2: UPDATED PDF DOWNLOAD HANDLER
+  // ✅ =================================================================
   const handleDownloadPdf = () => {
-    // Implementasi download PDF tidak diubah, seharusnya sudah berfungsi dengan header yang benar
-    if (itemsToRender.length === 0) return;
+    if (!docStructure || itemsToRender.length === 0) return;
+    
     const doc = new jsPDF();
+    const pageMargin = 14;
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const usableWidth = pageWidth - (pageMargin * 2);
+    let yPos = pageMargin;
 
-    doc.text("Hasil Draf Program Tahunan (Prota)", 14, 15);
+    // --- Part 1: Write Document Structure ---
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text(docStructure.Judul || "Program Tahunan", pageWidth / 2, yPos, { align: 'center' });
+    yPos += 10;
 
+    if (docStructure["Identitas Dokumen"]) {
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("Identitas Dokumen", pageMargin, yPos);
+      yPos += 6;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      Object.entries(docStructure["Identitas Dokumen"]).forEach(([key, val]) => {
+         doc.text(`${key}: ${val}`, pageMargin, yPos);
+         yPos += 5;
+      });
+      yPos += 5; // Extra space
+    }
+    
+    if (docStructure["Capaian Pembelajaran Umum"]) {
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("Capaian Pembelajaran Umum", pageMargin, yPos);
+        yPos += 6;
+        
+        doc.setFont("helvetica", "italic");
+        doc.setFontSize(10);
+        const cpLines = doc.splitTextToSize(docStructure["Capaian Pembelajaran Umum"], usableWidth);
+        doc.text(cpLines, pageMargin, yPos);
+        yPos += (cpLines.length * 4) + 5; // Adjust yPos based on number of lines
+    }
+
+    if (Array.isArray(docStructure["Elemen Capaian Pembelajaran"])) {
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.text("Elemen Capaian Pembelajaran", pageMargin, yPos);
+        yPos += 6;
+
+        doc.setFontSize(10);
+        docStructure["Elemen Capaian Pembelajaran"].forEach(elem => {
+            doc.setFont("helvetica", "bold");
+            doc.text(elem.Elemen, pageMargin, yPos);
+            yPos += 5;
+
+            doc.setFont("helvetica", "normal");
+            const descLines = doc.splitTextToSize(elem.Deskripsi, usableWidth);
+            doc.text(descLines, pageMargin, yPos);
+            yPos += (descLines.length * 4) + 3;
+        });
+        yPos += 5;
+    }
+
+    // --- Part 2: Generate Table ---
     const head = [tableHeaders.map(h => h.replace(/_/g, ' ').toUpperCase())];
     const body = itemsToRender.map(item => tableHeaders.map(header => String(item[header] !== null && item[header] !== undefined ? item[header] : '')));
 
-    autoTable(doc,{
-      startY: 20,
+    autoTable(doc, {
+      startY: yPos,
       head: head,
       body: body,
+      headStyles: { fillColor: [22, 160, 133] },
+      styles: { fontSize: 9, cellPadding: 2 },
+      columnStyles: {
+        1: { cellWidth: 'auto' }, // Alur Tujuan Pembelajaran
+      }
     });
 
+    // --- Part 3: Save PDF ---
     doc.save("Prota_Generated.pdf");
   };
 
@@ -298,7 +409,6 @@ const GeneratorWizardPage = () => {
                     Draf ini sudah tersimpan otomatis di akun Anda. Anda dapat mengekspornya di bawah ini.
                   </Typography>
 
-                  {/* ✅ PERBAIKAN: Rendering Document Structure */}
                   {docStructure && (
                     <Box sx={{ mb: 4 }}>
                       <Typography variant="h5" fontWeight="bold" gutterBottom>
@@ -342,7 +452,6 @@ const GeneratorWizardPage = () => {
                     </Box>
                   )}
 
-                  {/* ✅ PERBAIKAN: Rendering Tabel Prota */}
                   <TableContainer component={Paper} variant="outlined">
                     <Table>
                       <TableHead sx={{ backgroundColor: theme.palette.action.hover }}>

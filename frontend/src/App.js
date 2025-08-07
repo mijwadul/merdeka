@@ -43,7 +43,7 @@ function AppRoutes() {
           <Route path="/schools" element={<SchoolManagementPage />} />
           <Route path="/classes" element={<ClassManagementPage />} />
           <Route path="/docs" element={<DocsPage />} />
-           <Route path="/docs/:docId" element={<DocDetailPage />} />
+          <Route path="/docs/:docModel/:docId" element={<DocDetailPage />} />
           <Route path="/users" element={<UserManagementPage />} />
         </Route>
 
